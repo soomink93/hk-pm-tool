@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  chairman
+  executive
+  teamlead
+}
+
+enum TeamStatus {
+  green
+  yellow
+  red
+  gray
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  team         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Team {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  lead       String
+  status     TeamStatus @default(gray)
+  submitted  Boolean    @default(false)
+  risk       String     @default("없음")
+  escalation String     @default("없음")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Kpi {
+  id        String   @id @default(cuid())
+  team      String
+  metric    String
+  target    Float
+  current   Float
+  unit      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Decision {
+  id        String   @id @default(cuid())
+  date      String
+  content   String
+  tier      String
+  decider   String
+  priority  String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Escalation {
+  id        String   @id @default(cuid())
+  item      String
+  tier      String
+  dept      String
+  needed    String
+  deadline  String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Brief {
+  id          String   @id @default(cuid())
+  team        String
+  week        String
+  completed   String
+  nextGoal    String
+  risk        String
+  escalation  String
+  status      String
+  submittedAt String
+  createdAt   DateTime @default(now())
+}
