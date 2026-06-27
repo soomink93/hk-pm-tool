@@ -20,3 +20,11 @@ export const STATUS_COLOR: Record<string, string> = {
   red: '#C00000',
   gray: '#BFBFBF',
 }
+
+// 현재 연도/주차 라벨 (PoC :378)
+export const getWeek = (): string => {
+  const n = new Date()
+  const start = new Date(n.getFullYear(), 0, 1)
+  const week = Math.ceil(((n.getTime() - start.getTime()) / 86_400_000 + 1) / 7)
+  return `${n.getFullYear()}년 ${week}주차`
+}
