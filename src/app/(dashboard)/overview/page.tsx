@@ -80,18 +80,25 @@ export default async function OverviewPage() {
               <th className="py-2.5">팀명</th>
               <th className="py-2.5">팀장</th>
               <th className="py-2.5">상태</th>
+              <th className="py-2.5">지연 / 리스크</th>
             </tr>
           </thead>
           <tbody>
-            {teams.map((t) => (
-              <tr key={t.id} className="border-b border-slate-50 last:border-0">
-                <td className="py-2.5 font-semibold">{t.name}</td>
-                <td className="py-2.5">{t.lead}</td>
-                <td className="py-2.5">
-                  <StatusBadge status={t.status as keyof typeof STATUS_LABEL} />
-                </td>
-              </tr>
-            ))}
+            {teams.map((t) => {
+              const hasRisk = !!t.risk && t.risk !== '없음' && t.risk !== '—'
+              return (
+                <tr key={t.id} className="border-b border-slate-50 last:border-0">
+                  <td className="py-2.5 font-semibold">{t.name}</td>
+                  <td className="py-2.5">{t.lead}</td>
+                  <td className="py-2.5">
+                    <StatusBadge status={t.status as keyof typeof STATUS_LABEL} />
+                  </td>
+                  <td className="max-w-[280px] truncate py-2.5 text-xs" style={{ color: hasRisk ? '#E36C09' : '#94a3b8' }} title={hasRisk ? t.risk : undefined}>
+                    {hasRisk ? t.risk : '—'}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </Card>
