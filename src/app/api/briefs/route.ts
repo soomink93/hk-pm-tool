@@ -54,11 +54,20 @@ export async function POST(req: Request) {
     data: { submitted: true, status: status as TeamStatus, risk, escalation },
   })
 
-  // 협업 요청 대상 팀에 알림 생성 (본인 팀 제외)
-  const notiData = collaborations
-    .filter((c) => c.team && c.team !== team)
-    .map((c) => ({ recipientTeam: c.team, fromTeam: team, content: c.content }))
-  if (notiData.length) await prisma.notification.createMany({ data: notiData })
+  // 협업 요청 알림: 대상 팀 팀장 + 전체 임원에게 사용자별 생성 (제출자 제외)
+  const targets = collaborations.filter((c) => c.team && c.team !== team && c.content)
+  if (targets.length) {
+    const submitterId = g.session.user.id
+    const execs = await prisma.user.findMany({ where: { role: 'executive' }, select: { id: true } })
+    const notiData: { recipientUserId: string; fromTeam: string; toTeam: string; content: string }[] = []
+    for (const c of targets) {
+      const leads = await prisma.user.findMany({ where: { role: 'teamlead', team: c.team }, select: { id: true } })
+      const ids = new Set<string>([...leads.map((l) => l.id), ...execs.map((e) => e.id)])
+      ids.delete(submitterId)
+      for (const uid of ids) notiData.push({ recipientUserId: uid, fromTeam: team, toTeam: c.team, content: c.content })
+    }
+    if (notiData.length) await prisma.notification.createMany({ data: notiData })
+  }
 
   return NextResponse.json(brief, { status: 201 })
 }

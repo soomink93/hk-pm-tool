@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bell, Users } from 'lucide-react'
 
-type Noti = { id: string; fromTeam: string; content: string; read: boolean; createdAt: string }
+type Noti = { id: string; fromTeam: string; toTeam: string; content: string; read: boolean; createdAt: string }
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -82,7 +82,9 @@ export function NotificationBell() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px]">
-                      <b className="text-navy">{n.fromTeam}</b> 팀이 협업을 요청했습니다.
+                      <b className="text-navy">{n.fromTeam}</b>
+                      <span className="text-slate-400"> → </span>
+                      <b className="text-navy">{n.toTeam}</b> 협업 요청
                     </p>
                     <p className="mt-0.5 break-words text-xs text-slate-500">{n.content}</p>
                     <p className="mt-0.5 text-[11px] text-slate-400">{timeAgo(n.createdAt)}</p>

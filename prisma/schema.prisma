@@ -78,14 +78,15 @@ model Escalation {
 }
 
 model Notification {
-  id            String   @id @default(cuid())
-  recipientTeam String
-  fromTeam      String
-  content       String
-  read          Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id              String   @id @default(cuid())
+  recipientUserId String
+  fromTeam        String
+  toTeam          String
+  content         String
+  read            Boolean  @default(false)
+  createdAt       DateTime @default(now())
 
-  @@index([recipientTeam, read])
+  @@index([recipientUserId, read])
 }
 
 model Brief {
