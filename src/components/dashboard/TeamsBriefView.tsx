@@ -120,28 +120,30 @@ export function TeamsBriefView({
         {collabRequests.length === 0 ? (
           <p className="py-6 text-center text-[13px] text-slate-400">현재 협업 요청 사항이 없습니다.</p>
         ) : (
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b-2 border-line text-left text-[11px] uppercase tracking-wide text-slate-500">
-                <th className="py-2.5">요청 팀</th>
-                <th className="py-2.5">협업 필요 팀</th>
-                <th className="py-2.5">협업 내용</th>
-                <th className="py-2.5">조율 상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {collabRequests.map((c, i) => (
-                <tr key={i} className="border-b border-slate-50 last:border-0">
-                  <td className="py-2.5 font-semibold">{c.from}</td>
-                  <td className="py-2.5">{c.to}</td>
-                  <td className="py-2.5">{c.content}</td>
-                  <td className="py-2.5">
-                    <Badge tone={COLLAB_TONE[c.status] ?? 'gray'}>{c.status}</Badge>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-[13px]">
+              <thead>
+                <tr className="border-b-2 border-line text-left text-[11px] uppercase tracking-wide text-slate-500">
+                  <th className="py-2.5 pr-3">요청 팀</th>
+                  <th className="py-2.5 pr-3">협업 필요 팀</th>
+                  <th className="py-2.5 pr-3">협업 내용</th>
+                  <th className="py-2.5">조율 상태</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {collabRequests.map((c, i) => (
+                  <tr key={i} className="border-b border-slate-50 last:border-0">
+                    <td className="py-2.5 pr-3 font-semibold">{c.from}</td>
+                    <td className="py-2.5 pr-3">{c.to}</td>
+                    <td className="py-2.5 pr-3">{c.content}</td>
+                    <td className="py-2.5">
+                      <Badge tone={COLLAB_TONE[c.status] ?? 'gray'}>{c.status}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
 

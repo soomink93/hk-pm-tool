@@ -77,6 +77,17 @@ model Escalation {
   updatedAt DateTime @updatedAt
 }
 
+model Notification {
+  id            String   @id @default(cuid())
+  recipientTeam String
+  fromTeam      String
+  content       String
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([recipientTeam, read])
+}
+
 model Brief {
   id          String   @id @default(cuid())
   team        String

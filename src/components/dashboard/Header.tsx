@@ -1,6 +1,7 @@
 import { Building2 } from 'lucide-react'
 import type { Role } from '@/lib/rbac'
 import { LogoutButton } from './LogoutButton'
+import { NotificationBell } from './NotificationBell'
 
 const ROLE_LABEL: Record<Role, string> = {
   chairman: '회장님',
@@ -22,6 +23,7 @@ export function Header({ name, role }: { name: string; role: Role }) {
         <h1 className="text-base font-bold">HK 운영 대시보드</h1>
       </div>
       <div className="flex items-center gap-3">
+        <NotificationBell />
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${ROLE_CHIP[role]}`}>
           {ROLE_LABEL[role]}
         </span>

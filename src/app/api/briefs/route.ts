@@ -53,5 +53,12 @@ export async function POST(req: Request) {
     where: { name: team },
     data: { submitted: true, status: status as TeamStatus, risk, escalation },
   })
+
+  // 협업 요청 대상 팀에 알림 생성 (본인 팀 제외)
+  const notiData = collaborations
+    .filter((c) => c.team && c.team !== team)
+    .map((c) => ({ recipientTeam: c.team, fromTeam: team, content: c.content }))
+  if (notiData.length) await prisma.notification.createMany({ data: notiData })
+
   return NextResponse.json(brief, { status: 201 })
 }

@@ -112,21 +112,33 @@ export function TeamleadBrief({
               협업이 필요한 부문이 있으면 행을 추가하세요. 없으면 비워둡니다.
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {collabs.map((c, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <select className={`${inputClass} w-32 shrink-0`} value={c.team} onChange={(e) => updateCollab(i, 'team', e.target.value)}>
+                <div
+                  key={i}
+                  className="grid grid-cols-1 gap-2 rounded-md border border-line p-2.5 sm:grid-cols-[9rem_1fr_7rem_auto] sm:items-center"
+                >
+                  <select className={inputClass} value={c.team} onChange={(e) => updateCollab(i, 'team', e.target.value)}>
                     {otherTeams.map((t) => (
                       <option key={t}>{t}</option>
                     ))}
                   </select>
-                  <input className={inputClass} value={c.content} onChange={(e) => updateCollab(i, 'content', e.target.value)} placeholder="협업 내용" />
-                  <select className={`${inputClass} w-28 shrink-0`} value={c.status} onChange={(e) => updateCollab(i, 'status', e.target.value)}>
+                  <input
+                    className={inputClass}
+                    value={c.content}
+                    onChange={(e) => updateCollab(i, 'content', e.target.value)}
+                    placeholder="협업 필요 내용 (예: 공동 캠페인 데이터 공유)"
+                  />
+                  <select className={inputClass} value={c.status} onChange={(e) => updateCollab(i, 'status', e.target.value)}>
                     {COLLAB_STATUS.map((s) => (
                       <option key={s}>{s}</option>
                     ))}
                   </select>
-                  <button onClick={() => removeCollab(i)} className="shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="삭제">
+                  <button
+                    onClick={() => removeCollab(i)}
+                    className="justify-self-end rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                    aria-label="삭제"
+                  >
                     <X size={15} />
                   </button>
                 </div>
