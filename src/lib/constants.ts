@@ -27,6 +27,14 @@ export const PRIO_CLASS = {
   low: 'text-[#70AD47]',
 } as const
 
+// 타 부문 협업 — 조율 상태
+export const COLLAB_STATUS = ['요청예정', '협의중', '완료'] as const
+export const COLLAB_TONE: Record<string, 'gray' | 'yellow' | 'green'> = {
+  요청예정: 'gray',
+  협의중: 'yellow',
+  완료: 'green',
+}
+
 export const TABS = [
   { id: 'overview', label: '전체 현황', roles: ['chairman', 'executive', 'teamlead'] },
   { id: 'brief', label: '주간 보고', roles: ['chairman', 'executive', 'teamlead'] },

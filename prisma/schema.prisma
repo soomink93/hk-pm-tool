@@ -87,5 +87,6 @@ model Brief {
   escalation  String
   status      String
   submittedAt String
+  collaborations Json  @default("[]")
   createdAt   DateTime @default(now())
 }

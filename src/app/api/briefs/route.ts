@@ -25,6 +25,17 @@ export async function POST(req: Request) {
   const risk = String(b.risk ?? '없음') || '없음'
   const escalation = String(b.escalation ?? '없음') || '없음'
 
+  type CollabInput = { team?: unknown; content?: unknown; status?: unknown }
+  const collaborations = Array.isArray(b.collaborations)
+    ? (b.collaborations as CollabInput[])
+        .map((c) => ({
+          team: String(c?.team ?? ''),
+          content: String(c?.content ?? ''),
+          status: String(c?.status ?? '요청예정'),
+        }))
+        .filter((c) => c.team || c.content)
+    : []
+
   const brief = await prisma.brief.create({
     data: {
       team,
@@ -34,6 +45,7 @@ export async function POST(req: Request) {
       risk,
       escalation,
       status,
+      collaborations,
       submittedAt: new Date().toLocaleDateString('ko-KR'),
     },
   })

@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Send } from 'lucide-react'
+import { Send, Plus, X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Field, inputClass } from '@/components/ui/Modal'
-import { STATUS_LABEL } from '@/lib/constants'
+import { STATUS_LABEL, COLLAB_STATUS } from '@/lib/constants'
+
+export type Collaboration = { team: string; content: string; status: string }
 
 export type BriefRow = {
   id: string
@@ -21,11 +23,15 @@ export function TeamleadBrief({
   team,
   status,
   last,
+  lastCollaborations,
+  teams,
   briefs,
 }: {
   team: string
   status: string
   last: { completed: string; nextGoal: string; risk: string; escalation: string } | null
+  lastCollaborations: Collaboration[]
+  teams: string[]
   briefs: BriefRow[]
 }) {
   const router = useRouter()
@@ -36,8 +42,21 @@ export function TeamleadBrief({
     escalation: last?.escalation ?? '',
     status,
   })
+  const [collabs, setCollabs] = useState<Collaboration[]>(lastCollaborations ?? [])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+
+  const otherTeams = teams.filter((t) => t !== team)
+
+  function addCollab() {
+    setCollabs([...collabs, { team: otherTeams[0] ?? '', content: '', status: '요청예정' }])
+  }
+  function updateCollab(i: number, field: keyof Collaboration, val: string) {
+    setCollabs(collabs.map((c, idx) => (idx === i ? { ...c, [field]: val } : c)))
+  }
+  function removeCollab(i: number) {
+    setCollabs(collabs.filter((_, idx) => idx !== i))
+  }
 
   async function submit() {
     setBusy(true)
@@ -45,7 +64,7 @@ export function TeamleadBrief({
     const res = await fetch('/api/briefs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, collaborations: collabs.filter((c) => c.content.trim()) }),
     })
     setBusy(false)
     if (res.ok) {
@@ -79,6 +98,43 @@ export function TeamleadBrief({
             <option value="red">지연 중</option>
           </select>
         </Field>
+
+        {/* 타 부문 협업 필요 사항 */}
+        <div className="mt-2">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">타 부문 협업 필요 사항</label>
+            <button onClick={addCollab} className="inline-flex items-center gap-1 text-xs font-semibold text-navy-light hover:text-navy">
+              <Plus size={13} /> 행 추가
+            </button>
+          </div>
+          {collabs.length === 0 ? (
+            <p className="rounded-md border border-dashed border-line py-3 text-center text-xs text-slate-400">
+              협업이 필요한 부문이 있으면 행을 추가하세요. 없으면 비워둡니다.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {collabs.map((c, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <select className={`${inputClass} w-32 shrink-0`} value={c.team} onChange={(e) => updateCollab(i, 'team', e.target.value)}>
+                    {otherTeams.map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
+                  </select>
+                  <input className={inputClass} value={c.content} onChange={(e) => updateCollab(i, 'content', e.target.value)} placeholder="협업 내용" />
+                  <select className={`${inputClass} w-28 shrink-0`} value={c.status} onChange={(e) => updateCollab(i, 'status', e.target.value)}>
+                    {COLLAB_STATUS.map((s) => (
+                      <option key={s}>{s}</option>
+                    ))}
+                  </select>
+                  <button onClick={() => removeCollab(i)} className="shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="삭제">
+                    <X size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="mt-4 flex items-center gap-3">
           <Button onClick={submit} disabled={busy}>
             <Send size={14} /> {busy ? '제출 중…' : '보고 제출'}
