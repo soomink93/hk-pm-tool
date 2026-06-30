@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   const targets = collaborations.filter((c) => c.team && c.team !== team && c.content)
   if (targets.length) {
     const submitterId = g.session.user.id
-    const execs = await prisma.user.findMany({ where: { role: 'executive' }, select: { id: true } })
+    const execs = await prisma.user.findMany({ where: { role: { in: ['executive', 'admin'] } }, select: { id: true } })
     const notiData: { recipientUserId: string; fromTeam: string; toTeam: string; content: string }[] = []
     for (const c of targets) {
       const leads = await prisma.user.findMany({ where: { role: 'teamlead', team: c.team }, select: { id: true } })

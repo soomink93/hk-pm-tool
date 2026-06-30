@@ -4,7 +4,7 @@ import type { Role } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 
-const ROLES = ['chairman', 'executive', 'teamlead']
+const ROLES = ['admin', 'chairman', 'executive', 'teamlead']
 
 export async function GET() {
   const g = await guard('user:manage')

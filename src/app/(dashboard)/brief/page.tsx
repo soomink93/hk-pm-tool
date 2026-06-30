@@ -66,7 +66,7 @@ export default async function BriefPage() {
         escalation: t.escalation,
       }))}
       collabRequests={collabRequests}
-      canEdit={role === 'executive'}
+      canEdit={role === 'executive' || role === 'admin'}
       readOnly={role === 'chairman'}
     />
   )

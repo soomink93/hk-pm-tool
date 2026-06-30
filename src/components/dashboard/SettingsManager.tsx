@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { STATUS_LABEL } from '@/lib/constants'
 
-type Role = 'chairman' | 'executive' | 'teamlead'
-const ROLE_LABEL: Record<string, string> = { chairman: '회장님', executive: '임원', teamlead: '팀장' }
+type Role = 'admin' | 'chairman' | 'executive' | 'teamlead'
+const ROLE_LABEL: Record<string, string> = { admin: '관리자', chairman: '회장님', executive: '임원', teamlead: '팀장' }
 
 export type UserRow = { id: string; name: string; email: string; role: string; team: string | null }
 export type TeamRow = { id: string; name: string; lead: string; status: string }
@@ -222,6 +222,7 @@ export function SettingsManager({
             <option value="teamlead">팀장</option>
             <option value="executive">임원</option>
             <option value="chairman">회장님</option>
+            <option value="admin">관리자</option>
           </select>
         </Field>
         <Field label="팀 / 부문">

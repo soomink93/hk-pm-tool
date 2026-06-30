@@ -36,10 +36,10 @@ export const COLLAB_TONE: Record<string, 'gray' | 'yellow' | 'green'> = {
 }
 
 export const TABS = [
-  { id: 'overview', label: '전체 현황', roles: ['chairman', 'executive', 'teamlead'] },
-  { id: 'brief', label: '주간 보고', roles: ['chairman', 'executive', 'teamlead'] },
-  { id: 'kpi', label: 'KPI', roles: ['chairman', 'executive', 'teamlead'] },
-  { id: 'decisions', label: '결정 로그', roles: ['chairman', 'executive'] },
-  { id: 'escalation', label: '에스컬레이션', roles: ['chairman', 'executive', 'teamlead'] },
-  { id: 'settings', label: '설정', roles: ['chairman', 'executive', 'teamlead'] },
+  { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
+  { id: 'brief', label: '주간 보고', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
+  { id: 'kpi', label: 'KPI', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
+  { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'executive'] },
+  { id: 'escalation', label: '에스컬레이션', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
+  { id: 'settings', label: '설정', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
 ] as const

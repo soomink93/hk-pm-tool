@@ -26,7 +26,7 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = (token.uid as string) ?? ''
-        session.user.role = token.role as 'chairman' | 'executive' | 'teamlead'
+        session.user.role = token.role as 'admin' | 'chairman' | 'executive' | 'teamlead'
         session.user.team = (token.team as string) ?? ''
       }
       return session

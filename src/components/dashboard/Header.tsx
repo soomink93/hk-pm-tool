@@ -4,12 +4,14 @@ import { LogoutButton } from './LogoutButton'
 import { NotificationBell } from './NotificationBell'
 
 const ROLE_LABEL: Record<Role, string> = {
+  admin: '관리자',
   chairman: '회장님',
   executive: '임원',
   teamlead: '팀장',
 }
 
 const ROLE_CHIP: Record<Role, string> = {
+  admin: 'bg-rose-600 text-white',
   chairman: 'bg-amber-300 text-slate-900',
   executive: 'bg-green-600 text-white',
   teamlead: 'bg-navy-light text-white',
