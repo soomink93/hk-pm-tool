@@ -2,16 +2,18 @@ import { prisma } from '@/lib/prisma'
 import { Card, StatCard } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/Badge'
 import { OverviewChart } from '@/components/dashboard/OverviewChart'
-import { isUrgent, STATUS_COLOR } from '@/lib/helpers'
+import { OverviewSummary } from '@/components/dashboard/OverviewSummary'
+import { isUrgent, STATUS_COLOR, pct } from '@/lib/helpers'
 import { STATUS_LABEL } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
 export default async function OverviewPage() {
-  const [teams, escalations, decisions] = await Promise.all([
+  const [teams, escalations, decisions, kpis] = await Promise.all([
     prisma.team.findMany({ orderBy: { name: 'asc' } }),
     prisma.escalation.findMany(),
     prisma.decision.findMany(),
+    prisma.kpi.findMany(),
   ])
 
   const submitted = teams.filter((t) => t.submitted).length
@@ -28,8 +30,39 @@ export default async function OverviewPage() {
     color: STATUS_COLOR[s],
   }))
 
+  // ── 요약 패널용 집계 ──
+  const summaryCounts = {
+    total: teams.length,
+    green,
+    yellow: teams.filter((t) => t.status === 'yellow').length,
+    red: teams.filter((t) => t.status === 'red').length,
+    gray: teams.filter((t) => t.status === 'gray').length,
+    submitted,
+  }
+  const avgKpi = kpis.length
+    ? Math.round(kpis.reduce((s, k) => s + pct(k.current, k.target), 0) / kpis.length)
+    : null
+  const attentionTeams = teams
+    .filter((t) => t.status === 'red' || t.status === 'yellow')
+    .sort((a, b) => (a.status === 'red' ? 0 : 1) - (b.status === 'red' ? 0 : 1))
+    .map((t) => ({ name: t.name, status: t.status, risk: t.risk }))
+  const urgentEscalations = [...openEscal]
+    .sort((a, b) => a.deadline.localeCompare(b.deadline))
+    .map((e) => ({ item: e.item, dept: e.dept, deadline: e.deadline, urgent: isUrgent(e.deadline) }))
+  const pendingDecisions = decisions
+    .filter((d) => d.status !== '완료')
+    .map((d) => ({ content: d.content, decider: d.decider, tier: d.tier }))
+
   return (
     <div className="space-y-4">
+      <OverviewSummary
+        counts={summaryCounts}
+        avgKpi={avgKpi}
+        attentionTeams={attentionTeams}
+        urgentEscalations={urgentEscalations}
+        pendingDecisions={pendingDecisions}
+      />
+
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         <StatCard title="보고 제출률" value={`${submitted}/${teams.length}`} sub="이번 주 팀장 보고" />
         <StatCard title="정상 진행 팀" value={green} sub="전체 팀 중" valueClass="text-[#70AD47]" />
