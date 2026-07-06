@@ -45,13 +45,13 @@ export default async function OverviewPage() {
   const attentionTeams = teams
     .filter((t) => t.status === 'red' || t.status === 'yellow')
     .sort((a, b) => (a.status === 'red' ? 0 : 1) - (b.status === 'red' ? 0 : 1))
-    .map((t) => ({ name: t.name, status: t.status, risk: t.risk }))
+    .map((t) => ({ name: t.name, lead: t.lead, status: t.status, risk: t.risk, escalation: t.escalation, submitted: t.submitted }))
   const urgentEscalations = [...openEscal]
     .sort((a, b) => a.deadline.localeCompare(b.deadline))
-    .map((e) => ({ item: e.item, dept: e.dept, deadline: e.deadline, urgent: isUrgent(e.deadline) }))
+    .map((e) => ({ item: e.item, tier: e.tier, dept: e.dept, needed: e.needed, deadline: e.deadline, status: e.status, urgent: isUrgent(e.deadline) }))
   const pendingDecisions = decisions
     .filter((d) => d.status !== '완료')
-    .map((d) => ({ content: d.content, decider: d.decider, tier: d.tier }))
+    .map((d) => ({ date: d.date, content: d.content, tier: d.tier, decider: d.decider, priority: d.priority, status: d.status }))
 
   return (
     <div className="space-y-4">

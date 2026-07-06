@@ -37,3 +37,23 @@ body {
 .badge-red    { background: #FCE4D6; color: #C00000; }
 .badge-blue   { background: #DDEEFF; color: #1F3864; }
 .badge-gray   { background: #F2F2F2; color: #666666; }
+
+/* PDF(인쇄) — 운영 요약 패널만 출력 */
+@media print {
+  header,
+  nav {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  main > div > *:not(.print-area) {
+    display: none !important;
+  }
+  .print-area {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
