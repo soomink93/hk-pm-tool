@@ -117,10 +117,13 @@ model Task {
   dueDate       String     @default("")
   createdById   String
   createdByName String
+  collaborationId String?
+  collaboration   Collaboration? @relation(fields: [collaborationId], references: [id], onDelete: SetNull)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
   @@index([team, status])
+  @@index([collaborationId])
 }
 
 model Collaboration {
@@ -134,6 +137,7 @@ model Collaboration {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   comments      CollaborationComment[]
+  tasks         Task[]
 
   @@index([toTeam, status])
   @@index([fromTeam, status])

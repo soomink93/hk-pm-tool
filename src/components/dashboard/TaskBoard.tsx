@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, X, CalendarClock, User } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Pencil, X, CalendarClock, User, Handshake } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -19,6 +20,7 @@ export type Task = {
   priority: string
   dueDate: string
   createdByName: string
+  collabFrom?: string | null
 }
 
 const PRIO_TONE: Record<string, 'red' | 'yellow' | 'green'> = { high: 'red', mid: 'yellow', low: 'green' }
@@ -142,6 +144,11 @@ export function TaskBoard({
                         <span className="flex-1 text-[13px] font-semibold text-navy">{t.title}</span>
                         <Badge tone={PRIO_TONE[t.priority] ?? 'gray'}>{PRIO_LABEL[t.priority as keyof typeof PRIO_LABEL] ?? t.priority}</Badge>
                       </div>
+                      {t.collabFrom && (
+                        <Link href="/collaboration" className="mb-1.5 inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-navy-light hover:bg-blue-100">
+                          <Handshake size={10} /> {t.collabFrom} 협업
+                        </Link>
+                      )}
                       {t.description && <p className="mb-2 line-clamp-2 text-xs text-slate-500">{t.description}</p>}
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
                         {t.assignee && (

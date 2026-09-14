@@ -15,7 +15,10 @@ export default async function CollaborationPage() {
     prisma.collaboration.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
-      include: { comments: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        comments: { orderBy: { createdAt: 'asc' } },
+        tasks: { select: { id: true, title: true, status: true }, orderBy: { createdAt: 'asc' } },
+      },
     }),
     prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
   ])
@@ -37,6 +40,7 @@ export default async function CollaborationPage() {
           body: m.body,
           createdAt: m.createdAt.toISOString(),
         })),
+        tasks: c.tasks.map((t) => ({ id: t.id, title: t.title, status: t.status })),
       }))}
       myTeam={team ?? ''}
       teams={teamRows.map((t) => t.name)}

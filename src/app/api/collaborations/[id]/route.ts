@@ -10,7 +10,7 @@ const VALID: CollabStatus[] = ['requested', 'accepted', 'in_progress', 'done', '
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard()
   if (g.res) return g.res
-  const { id: userId, role, team } = g.session.user
+  const { id: userId, name, role, team } = g.session.user
   const { id } = await params
   const b = await req.json()
   const status = String(b.status ?? '') as CollabStatus
@@ -26,6 +26,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: '요청을 받은 팀만 수락/거절할 수 있습니다.' }, { status: 403 })
 
   const updated = await prisma.collaboration.update({ where: { id }, data: { status } })
+
+  // 수락 시 대상 팀 작업 보드에 작업 자동 생성 (중복 방지)
+  if (status === 'accepted') {
+    const exists = await prisma.task.findFirst({ where: { collaborationId: id } })
+    if (!exists) {
+      await prisma.task.create({
+        data: {
+          title: collab.content,
+          description: `${collab.fromTeam} 협업 요청`,
+          team: collab.toTeam,
+          status: 'todo',
+          priority: 'mid',
+          collaborationId: id,
+          createdById: userId,
+          createdByName: name ?? '',
+        },
+      })
+    }
+  }
+
   await createCollabNotifications({
     teams: [collab.fromTeam, collab.toTeam],
     fromTeam: collab.fromTeam,

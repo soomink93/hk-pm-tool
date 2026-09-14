@@ -16,7 +16,10 @@ export async function GET() {
   const items = await prisma.collaboration.findMany({
     where,
     orderBy: { updatedAt: 'desc' },
-    include: { comments: { orderBy: { createdAt: 'asc' } } },
+    include: {
+      comments: { orderBy: { createdAt: 'asc' } },
+      tasks: { select: { id: true, title: true, status: true }, orderBy: { createdAt: 'asc' } },
+    },
   })
   return NextResponse.json({ items, myTeam: team ?? '' })
 }

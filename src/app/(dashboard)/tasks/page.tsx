@@ -10,7 +10,11 @@ export default async function TasksPage() {
 
   const where = role === 'teamlead' ? { team: team ?? '' } : {}
   const [tasks, teamRows] = await Promise.all([
-    prisma.task.findMany({ where, orderBy: [{ status: 'asc' }, { createdAt: 'desc' }] }),
+    prisma.task.findMany({
+      where,
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+      include: { collaboration: { select: { fromTeam: true } } },
+    }),
     prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
   ])
 
@@ -26,6 +30,7 @@ export default async function TasksPage() {
         priority: t.priority,
         dueDate: t.dueDate,
         createdByName: t.createdByName,
+        collabFrom: t.collaboration?.fromTeam ?? null,
       }))}
       myTeam={team ?? ''}
       teams={teamRows.map((t) => t.name)}

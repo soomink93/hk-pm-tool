@@ -2,14 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Send, MessageSquare, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Send, MessageSquare, ArrowRight, KanbanSquare } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
-import { COLLAB_STATE_LABEL, COLLAB_STATE_TONE } from '@/lib/constants'
+import { COLLAB_STATE_LABEL, COLLAB_STATE_TONE, TASK_STATUS_LABEL } from '@/lib/constants'
 
 export type Comment = { id: string; authorName: string; body: string; createdAt: string }
+export type LinkedTask = { id: string; title: string; status: string }
 export type Collab = {
   id: string
   fromTeam: string
@@ -20,6 +22,7 @@ export type Collab = {
   createdAt: string
   updatedAt: string
   comments: Comment[]
+  tasks: LinkedTask[]
 }
 
 const fmt = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })
@@ -103,6 +106,21 @@ function CollabCard({
           {isRequester && c.status === 'requested' && (
             <Button variant="ghost" onClick={cancel} disabled={busy}>요청 취소</Button>
           )}
+        </div>
+      )}
+
+      {/* 연결된 작업 */}
+      {c.tasks.length > 0 && (
+        <div className="mt-3 rounded-md bg-blue-50/50 px-3 py-2">
+          <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold text-navy-light">
+            <KanbanSquare size={12} /> 연결된 작업 ({c.toTeam})
+          </div>
+          {c.tasks.map((t) => (
+            <Link key={t.id} href="/tasks" className="flex items-center justify-between gap-2 py-0.5 text-[13px] text-slate-700 hover:text-navy">
+              <span className="truncate">{t.title}</span>
+              <span className="shrink-0 text-[11px] text-slate-400">{TASK_STATUS_LABEL[t.status] ?? t.status}</span>
+            </Link>
+          ))}
         </div>
       )}
 
