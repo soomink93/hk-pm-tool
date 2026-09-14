@@ -2,6 +2,7 @@ import { Building2 } from 'lucide-react'
 import type { Role } from '@/lib/rbac'
 import { LogoutButton } from './LogoutButton'
 import { NotificationBell } from './NotificationBell'
+import { GlobalSearch } from './GlobalSearch'
 
 const ROLE_LABEL: Record<Role, string> = {
   admin: '관리자',
@@ -19,12 +20,15 @@ const ROLE_CHIP: Record<Role, string> = {
 
 export function Header({ name, role }: { name: string; role: Role }) {
   return (
-    <header className="flex items-center justify-between bg-navy px-6 py-3.5 text-white">
-      <div className="flex items-center gap-2">
+    <header className="flex items-center gap-4 bg-navy px-6 py-3.5 text-white">
+      <div className="flex shrink-0 items-center gap-2">
         <Building2 size={18} />
-        <h1 className="text-base font-bold">HK 운영 대시보드</h1>
+        <h1 className="whitespace-nowrap text-base font-bold">HK 운영 대시보드</h1>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="hidden flex-1 justify-center md:flex">
+        <GlobalSearch />
+      </div>
+      <div className="flex shrink-0 items-center gap-3 ml-auto md:ml-0">
         <NotificationBell />
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${ROLE_CHIP[role]}`}>
           {ROLE_LABEL[role]}
