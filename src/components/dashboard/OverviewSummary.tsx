@@ -33,12 +33,14 @@ const clickable =
 export function OverviewSummary({
   counts,
   avgKpi,
+  taskStats,
   attentionTeams,
   urgentEscalations,
   pendingDecisions,
 }: {
   counts: Counts
   avgKpi: number | null
+  taskStats: { open: number; overdue: number }
   attentionTeams: AttentionTeam[]
   urgentEscalations: UrgentEscal[]
   pendingDecisions: PendingDecision[]
@@ -76,6 +78,12 @@ export function OverviewSummary({
           {avgKpi !== null && (
             <>
               {' · '}KPI 평균 달성률 <b className="text-navy">{avgKpi}%</b>
+            </>
+          )}
+          {' · '}미완료 작업 <b className="text-navy">{taskStats.open}</b>개
+          {taskStats.overdue > 0 && (
+            <>
+              {' ('}지연 <b className="text-[#C00000]">{taskStats.overdue}</b>{')'}
             </>
           )}
           .

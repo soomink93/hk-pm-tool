@@ -10,6 +10,7 @@ import {
   TriangleAlert,
   Settings,
   Handshake,
+  KanbanSquare,
 } from 'lucide-react'
 import { TABS } from '@/lib/constants'
 import type { Role } from '@/lib/rbac'
@@ -18,6 +19,7 @@ const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   overview: LayoutDashboard,
   brief: FileText,
   collaboration: Handshake,
+  tasks: KanbanSquare,
   kpi: BarChart3,
   decisions: CheckSquare,
   escalation: TriangleAlert,

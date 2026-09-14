@@ -43,10 +43,19 @@ export const COLLAB_STATE_TONE: Record<string, 'gray' | 'blue' | 'yellow' | 'gre
   declined: 'red',
 }
 
+// 작업(Task) 상태
+export const TASK_STATUS_LABEL: Record<string, string> = {
+  todo: '할 일',
+  in_progress: '진행 중',
+  done: '완료',
+}
+export const TASK_COLUMNS = ['todo', 'in_progress', 'done'] as const
+
 export const TABS = [
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
   { id: 'brief', label: '주간 보고', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
   { id: 'collaboration', label: '협업', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
+  { id: 'tasks', label: '작업', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
   { id: 'kpi', label: 'KPI', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
   { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'executive'] },
   { id: 'escalation', label: '에스컬레이션', roles: ['admin', 'chairman', 'executive', 'teamlead'] },

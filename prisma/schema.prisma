@@ -100,6 +100,29 @@ enum CollabStatus {
   declined
 }
 
+enum TaskStatus {
+  todo
+  in_progress
+  done
+}
+
+model Task {
+  id            String     @id @default(cuid())
+  title         String
+  description   String     @default("")
+  team          String
+  assignee      String     @default("")
+  status        TaskStatus @default(todo)
+  priority      String     @default("mid")
+  dueDate       String     @default("")
+  createdById   String
+  createdByName String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([team, status])
+}
+
 model Collaboration {
   id            String       @id @default(cuid())
   fromTeam      String

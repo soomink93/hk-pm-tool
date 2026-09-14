@@ -9,12 +9,17 @@ import { STATUS_LABEL } from '@/lib/constants'
 export const dynamic = 'force-dynamic'
 
 export default async function OverviewPage() {
-  const [teams, escalations, decisions, kpis] = await Promise.all([
+  const [teams, escalations, decisions, kpis, tasks] = await Promise.all([
     prisma.team.findMany({ orderBy: { name: 'asc' } }),
     prisma.escalation.findMany(),
     prisma.decision.findMany(),
     prisma.kpi.findMany(),
+    prisma.task.findMany({ select: { status: true, dueDate: true } }),
   ])
+
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const openTasks = tasks.filter((t) => t.status !== 'done').length
+  const overdueTasks = tasks.filter((t) => t.status !== 'done' && t.dueDate && t.dueDate < todayISO).length
 
   const submitted = teams.filter((t) => t.submitted).length
   const green = teams.filter((t) => t.status === 'green').length
@@ -58,6 +63,7 @@ export default async function OverviewPage() {
       <OverviewSummary
         counts={summaryCounts}
         avgKpi={avgKpi}
+        taskStats={{ open: openTasks, overdue: overdueTasks }}
         attentionTeams={attentionTeams}
         urgentEscalations={urgentEscalations}
         pendingDecisions={pendingDecisions}
