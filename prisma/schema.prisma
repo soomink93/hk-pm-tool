@@ -84,10 +84,48 @@ model Notification {
   fromTeam        String
   toTeam          String
   content         String
+  kind            String   @default("request")
+  href            String?
   read            Boolean  @default(false)
   createdAt       DateTime @default(now())
 
   @@index([recipientUserId, read])
+}
+
+enum CollabStatus {
+  requested
+  accepted
+  in_progress
+  done
+  declined
+}
+
+model Collaboration {
+  id            String       @id @default(cuid())
+  fromTeam      String
+  toTeam        String
+  content       String
+  status        CollabStatus @default(requested)
+  createdById   String
+  createdByName String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  comments      CollaborationComment[]
+
+  @@index([toTeam, status])
+  @@index([fromTeam, status])
+}
+
+model CollaborationComment {
+  id              String        @id @default(cuid())
+  collaborationId String
+  collaboration   Collaboration @relation(fields: [collaborationId], references: [id], onDelete: Cascade)
+  authorId        String
+  authorName      String
+  body            String
+  createdAt       DateTime      @default(now())
+
+  @@index([collaborationId])
 }
 
 model Brief {

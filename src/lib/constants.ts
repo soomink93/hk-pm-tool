@@ -27,17 +27,26 @@ export const PRIO_CLASS = {
   low: 'text-[#70AD47]',
 } as const
 
-// 타 부문 협업 — 조율 상태
-export const COLLAB_STATUS = ['요청예정', '협의중', '완료'] as const
-export const COLLAB_TONE: Record<string, 'gray' | 'yellow' | 'green'> = {
-  요청예정: 'gray',
-  협의중: 'yellow',
-  완료: 'green',
+// 협업(Collaboration) 상태 — 워크플로
+export const COLLAB_STATE_LABEL: Record<string, string> = {
+  requested: '요청됨',
+  accepted: '수락됨',
+  in_progress: '진행중',
+  done: '완료',
+  declined: '거절됨',
+}
+export const COLLAB_STATE_TONE: Record<string, 'gray' | 'blue' | 'yellow' | 'green' | 'red'> = {
+  requested: 'gray',
+  accepted: 'blue',
+  in_progress: 'yellow',
+  done: 'green',
+  declined: 'red',
 }
 
 export const TABS = [
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
   { id: 'brief', label: '주간 보고', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
+  { id: 'collaboration', label: '협업', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
   { id: 'kpi', label: 'KPI', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
   { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'executive'] },
   { id: 'escalation', label: '에스컬레이션', roles: ['admin', 'chairman', 'executive', 'teamlead'] },

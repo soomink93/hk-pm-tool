@@ -7,9 +7,9 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Field, inputClass } from '@/components/ui/Modal'
-import { STATUS_LABEL, COLLAB_STATUS } from '@/lib/constants'
+import { STATUS_LABEL } from '@/lib/constants'
 
-export type Collaboration = { team: string; content: string; status: string }
+export type Collaboration = { team: string; content: string }
 
 export type BriefRow = {
   id: string
@@ -23,14 +23,12 @@ export function TeamleadBrief({
   team,
   status,
   last,
-  lastCollaborations,
   teams,
   briefs,
 }: {
   team: string
   status: string
   last: { completed: string; nextGoal: string; risk: string; escalation: string } | null
-  lastCollaborations: Collaboration[]
   teams: string[]
   briefs: BriefRow[]
 }) {
@@ -42,14 +40,14 @@ export function TeamleadBrief({
     escalation: last?.escalation ?? '',
     status,
   })
-  const [collabs, setCollabs] = useState<Collaboration[]>(lastCollaborations ?? [])
+  const [collabs, setCollabs] = useState<Collaboration[]>([])
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
   const otherTeams = teams.filter((t) => t !== team)
 
   function addCollab() {
-    setCollabs([...collabs, { team: otherTeams[0] ?? '', content: '', status: '요청예정' }])
+    setCollabs([...collabs, { team: otherTeams[0] ?? '', content: '' }])
   }
   function updateCollab(i: number, field: keyof Collaboration, val: string) {
     setCollabs(collabs.map((c, idx) => (idx === i ? { ...c, [field]: val } : c)))
@@ -109,14 +107,14 @@ export function TeamleadBrief({
           </div>
           {collabs.length === 0 ? (
             <p className="rounded-md border border-dashed border-line py-3 text-center text-xs text-slate-400">
-              협업이 필요한 부문이 있으면 행을 추가하세요. 없으면 비워둡니다.
+              협업이 필요한 부문이 있으면 행을 추가하세요. 제출 시 해당 팀에 협업 요청이 전달됩니다.
             </p>
           ) : (
             <div className="space-y-3">
               {collabs.map((c, i) => (
                 <div
                   key={i}
-                  className="grid grid-cols-1 gap-2 rounded-md border border-line p-2.5 sm:grid-cols-[9rem_1fr_7rem_auto] sm:items-center"
+                  className="grid grid-cols-1 gap-2 rounded-md border border-line p-2.5 sm:grid-cols-[10rem_1fr_auto] sm:items-center"
                 >
                   <select className={inputClass} value={c.team} onChange={(e) => updateCollab(i, 'team', e.target.value)}>
                     {otherTeams.map((t) => (
@@ -129,11 +127,6 @@ export function TeamleadBrief({
                     onChange={(e) => updateCollab(i, 'content', e.target.value)}
                     placeholder="협업 필요 내용 (예: 공동 캠페인 데이터 공유)"
                   />
-                  <select className={inputClass} value={c.status} onChange={(e) => updateCollab(i, 'status', e.target.value)}>
-                    {COLLAB_STATUS.map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
                   <button
                     onClick={() => removeCollab(i)}
                     className="justify-self-end rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"

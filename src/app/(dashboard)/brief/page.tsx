@@ -1,11 +1,9 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { TeamleadBrief, type Collaboration } from '@/components/dashboard/TeamleadBrief'
-import { TeamsBriefView, type CollabRequest } from '@/components/dashboard/TeamsBriefView'
+import { TeamleadBrief } from '@/components/dashboard/TeamleadBrief'
+import { TeamsBriefView } from '@/components/dashboard/TeamsBriefView'
 
 export const dynamic = 'force-dynamic'
-
-const asCollabs = (v: unknown): Collaboration[] => (Array.isArray(v) ? (v as Collaboration[]) : [])
 
 export default async function BriefPage() {
   const session = await auth()
@@ -25,7 +23,6 @@ export default async function BriefPage() {
         team={team}
         status={myTeam?.status ?? 'green'}
         last={last ? { completed: last.completed, nextGoal: last.nextGoal, risk: last.risk, escalation: last.escalation } : null}
-        lastCollaborations={last ? asCollabs(last.collaborations) : []}
         teams={teamNames}
         briefs={briefs.map((b) => ({
           id: b.id,
@@ -38,21 +35,8 @@ export default async function BriefPage() {
     )
   }
 
-  // 임원/회장: 팀 현황 + 팀별 최신 보고의 협업 요청 집계
-  const [teams, briefs] = await Promise.all([
-    prisma.team.findMany({ orderBy: { name: 'asc' } }),
-    prisma.brief.findMany({ orderBy: { createdAt: 'desc' } }),
-  ])
-
-  const latestByTeam = new Map<string, (typeof briefs)[number]>()
-  for (const b of briefs) if (!latestByTeam.has(b.team)) latestByTeam.set(b.team, b)
-
-  const collabRequests: CollabRequest[] = []
-  for (const b of latestByTeam.values()) {
-    for (const c of asCollabs(b.collaborations)) {
-      collabRequests.push({ from: b.team, to: c.team, content: c.content, status: c.status })
-    }
-  }
+  // 임원/회장/관리자: 팀 현황
+  const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
 
   return (
     <TeamsBriefView
@@ -65,7 +49,6 @@ export default async function BriefPage() {
         risk: t.risk,
         escalation: t.escalation,
       }))}
-      collabRequests={collabRequests}
       canEdit={role === 'executive' || role === 'admin'}
       readOnly={role === 'chairman'}
     />

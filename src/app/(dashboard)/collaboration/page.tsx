@@ -1,0 +1,46 @@
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { CollaborationManager } from '@/components/dashboard/CollaborationManager'
+
+export const dynamic = 'force-dynamic'
+
+export default async function CollaborationPage() {
+  const session = await auth()
+  const { role, team } = session!.user
+
+  const where =
+    role === 'teamlead' ? { OR: [{ fromTeam: team ?? '' }, { toTeam: team ?? '' }] } : {}
+
+  const [items, teamRows] = await Promise.all([
+    prisma.collaboration.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      include: { comments: { orderBy: { createdAt: 'asc' } } },
+    }),
+    prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
+  ])
+
+  return (
+    <CollaborationManager
+      items={items.map((c) => ({
+        id: c.id,
+        fromTeam: c.fromTeam,
+        toTeam: c.toTeam,
+        content: c.content,
+        status: c.status,
+        createdByName: c.createdByName,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+        comments: c.comments.map((m) => ({
+          id: m.id,
+          authorName: m.authorName,
+          body: m.body,
+          createdAt: m.createdAt.toISOString(),
+        })),
+      }))}
+      myTeam={team ?? ''}
+      teams={teamRows.map((t) => t.name)}
+      privileged={role === 'executive' || role === 'admin'}
+    />
+  )
+}
