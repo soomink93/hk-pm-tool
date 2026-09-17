@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { editableTeams, scopeToArray } from '@/lib/scope'
@@ -7,12 +8,10 @@ export const dynamic = 'force-dynamic'
 
 export default async function KpiPage() {
   const session = await auth()
-  const role = session!.user.role
-  const team = session!.user.team
+  if (session!.user.role !== 'admin') notFound()
 
-  const where = role === 'teamlead' ? { team: team ?? '' } : {}
   const [kpis, teams] = await Promise.all([
-    prisma.kpi.findMany({ where, orderBy: { team: 'asc' } }),
+    prisma.kpi.findMany({ orderBy: { team: 'asc' } }),
     prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
   ])
   const scope = scopeToArray(await editableTeams(session!))

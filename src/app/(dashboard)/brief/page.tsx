@@ -1,42 +1,15 @@
+import { notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { editableTeams, scopeToArray } from '@/lib/scope'
-import { TeamleadBrief } from '@/components/dashboard/TeamleadBrief'
 import { TeamsBriefView } from '@/components/dashboard/TeamsBriefView'
 
 export const dynamic = 'force-dynamic'
 
 export default async function BriefPage() {
   const session = await auth()
-  const { role, team } = session!.user
+  if (session!.user.role !== 'admin') notFound()
 
-  const allTeams = await prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } })
-  const teamNames = allTeams.map((t) => t.name)
-
-  if (role === 'teamlead') {
-    const [myTeam, briefs] = await Promise.all([
-      prisma.team.findUnique({ where: { name: team } }),
-      prisma.brief.findMany({ where: { team }, orderBy: { createdAt: 'desc' } }),
-    ])
-    const last = briefs[0]
-    return (
-      <TeamleadBrief
-        team={team}
-        status={myTeam?.status ?? 'green'}
-        last={last ? { completed: last.completed, nextGoal: last.nextGoal, risk: last.risk, escalation: last.escalation } : null}
-        teams={teamNames}
-        briefs={briefs.map((b) => ({
-          id: b.id,
-          completed: b.completed,
-          nextGoal: b.nextGoal,
-          status: b.status,
-          submittedAt: b.submittedAt,
-        }))}
-      />
-    )
-  }
-
-  // 임원/회장/관리자: 팀 현황
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } })
 
   return (
