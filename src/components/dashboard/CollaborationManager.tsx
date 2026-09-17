@@ -29,22 +29,21 @@ const fmt = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 
 
 function CollabCard({
   c,
-  myTeam,
-  privileged,
+  editableTeams,
   onChanged,
 }: {
   c: Collab
-  myTeam: string
-  privileged: boolean
+  editableTeams: 'all' | string[]
   onChanged: () => void
 }) {
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
   const [showComments, setShowComments] = useState(false)
 
-  const involved = privileged || myTeam === c.fromTeam || myTeam === c.toTeam
-  const canRespond = privileged || myTeam === c.toTeam
-  const isRequester = privileged || myTeam === c.fromTeam
+  const canT = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
+  const involved = canT(c.fromTeam) || canT(c.toTeam)
+  const canRespond = canT(c.toTeam)
+  const isRequester = canT(c.fromTeam)
   const terminal = c.status === 'done' || c.status === 'declined'
 
   async function setStatus(status: string) {
@@ -170,12 +169,12 @@ export function CollaborationManager({
   items,
   myTeam,
   teams,
-  privileged,
+  editableTeams,
 }: {
   items: Collab[]
   myTeam: string
   teams: string[]
-  privileged: boolean
+  editableTeams: 'all' | string[]
 }) {
   const router = useRouter()
   const refresh = () => router.refresh()
@@ -218,7 +217,7 @@ export function CollaborationManager({
         <h2 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-slate-500">{title} ({list.length})</h2>
         <div className="space-y-3">
           {list.map((c) => (
-            <CollabCard key={c.id} c={c} myTeam={myTeam} privileged={privileged} onChanged={refresh} />
+            <CollabCard key={c.id} c={c} editableTeams={editableTeams} onChanged={refresh} />
           ))}
         </div>
       </div>

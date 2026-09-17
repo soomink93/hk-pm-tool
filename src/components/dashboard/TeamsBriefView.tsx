@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, BookOpen } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -22,14 +22,14 @@ export type Team = {
 
 export function TeamsBriefView({
   teams,
-  canEdit,
-  readOnly,
+  editableTeams,
 }: {
   teams: Team[]
-  canEdit: boolean
-  readOnly: boolean
+  editableTeams: 'all' | string[]
 }) {
   const router = useRouter()
+  const canEdit = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
+  const canAny = editableTeams === 'all' || editableTeams.length > 0
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState({ lead: '', status: 'green', risk: '', escalation: '' })
   const [busy, setBusy] = useState(false)
@@ -57,12 +57,6 @@ export function TeamsBriefView({
     <div className="space-y-4">
       <h1 className="text-base font-bold text-navy">주간 보고 현황</h1>
 
-      {readOnly && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-800">
-          <BookOpen size={15} /> 읽기 전용 — 회장님 보기
-        </div>
-      )}
-
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         {teams.map((t) => (
           <Card key={t.id} className="!p-3.5" >
@@ -86,7 +80,7 @@ export function TeamsBriefView({
               <th className="py-2.5">상태</th>
               <th className="py-2.5">리스크</th>
               <th className="py-2.5">에스컬레이션</th>
-              {canEdit && <th className="py-2.5" />}
+              {canAny && <th className="py-2.5" />}
             </tr>
           </thead>
           <tbody>
@@ -98,11 +92,13 @@ export function TeamsBriefView({
                 <td className="py-2.5"><StatusBadge status={t.status as keyof typeof STATUS_LABEL} /></td>
                 <td className="py-2.5 text-xs" style={{ color: t.risk && t.risk !== '없음' ? '#E36C09' : '#94a3b8' }}>{t.risk || '—'}</td>
                 <td className="py-2.5 text-xs" style={{ color: t.escalation && t.escalation !== '없음' ? '#C00000' : '#94a3b8' }}>{t.escalation || '—'}</td>
-                {canEdit && (
+                {canAny && (
                   <td className="py-2.5">
-                    <button onClick={() => openEdit(t)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
-                      <Pencil size={14} />
-                    </button>
+                    {canEdit(t.name) && (
+                      <button onClick={() => openEdit(t)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
+                        <Pencil size={14} />
+                      </button>
+                    )}
                   </td>
                 )}
               </tr>

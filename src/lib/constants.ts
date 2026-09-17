@@ -52,12 +52,12 @@ export const TASK_STATUS_LABEL: Record<string, string> = {
 export const TASK_COLUMNS = ['todo', 'in_progress', 'done'] as const
 
 export const TABS = [
-  { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
-  { id: 'brief', label: '주간 보고', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
-  { id: 'collaboration', label: '협업', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
-  { id: 'tasks', label: '작업', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
-  { id: 'kpi', label: 'KPI', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
-  { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'executive'] },
-  { id: 'escalation', label: '에스컬레이션', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
-  { id: 'settings', label: '설정', roles: ['admin', 'chairman', 'executive', 'teamlead'] },
+  { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'brief', label: '주간 보고', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'collaboration', label: '협업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'tasks', label: '작업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'kpi', label: 'KPI', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'president', 'executive'] },
+  { id: 'escalation', label: '에스컬레이션', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'settings', label: '설정', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
 ] as const

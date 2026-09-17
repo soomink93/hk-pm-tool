@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
+import { editableTeams, canEditTeam } from '@/lib/scope'
 
 export async function GET() {
   const g = await guard()
@@ -13,11 +14,14 @@ export async function POST(req: Request) {
   const g = await guard('escalation:write')
   if (g.res) return g.res
   const b = await req.json()
+  const dept = String(b.dept ?? '')
+  const scope = await editableTeams(g.session)
+  if (!canEditTeam(scope, dept)) return NextResponse.json({ error: '해당 팀의 에스컬레이션을 등록할 권한이 없습니다.' }, { status: 403 })
   const escalation = await prisma.escalation.create({
     data: {
       item: String(b.item ?? ''),
       tier: String(b.tier ?? ''),
-      dept: String(b.dept ?? ''),
+      dept,
       needed: String(b.needed ?? ''),
       deadline: String(b.deadline ?? ''),
       status: String(b.status ?? '대기중'),

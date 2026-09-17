@@ -2,25 +2,19 @@ import { NextResponse } from 'next/server'
 import type { Prisma, TaskStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
+import { editableTeams, canEditTeam } from '@/lib/scope'
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done']
-
-async function canEdit(id: string, role: string, team: string | undefined) {
-  const task = await prisma.task.findUnique({ where: { id } })
-  if (!task) return { task: null, ok: false }
-  if (role === 'chairman') return { task, ok: false }
-  const ok = role === 'admin' || role === 'executive' || (role === 'teamlead' && task.team === team)
-  return { task, ok }
-}
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard()
   if (g.res) return g.res
-  const { role, team } = g.session.user
   const { id } = await params
-  const { task, ok } = await canEdit(id, role, team)
+  const task = await prisma.task.findUnique({ where: { id } })
   if (!task) return NextResponse.json({ error: '항목을 찾을 수 없습니다.' }, { status: 404 })
-  if (!ok) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+
+  const scope = await editableTeams(g.session)
+  if (!canEditTeam(scope, task.team)) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
 
   const b = await req.json()
   const data: Prisma.TaskUpdateInput = {}
@@ -30,8 +24,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (b.priority !== undefined) data.priority = String(b.priority)
   if (b.dueDate !== undefined) data.dueDate = String(b.dueDate)
   if (b.status !== undefined && STATUSES.includes(b.status)) data.status = b.status as TaskStatus
-  // 임원/관리자만 팀 변경 허용
-  if (b.team !== undefined && (role === 'admin' || role === 'executive')) data.team = String(b.team)
+  // 팀 이동은 새 팀도 수정 권한 내여야 함
+  if (b.team !== undefined && String(b.team) !== task.team) {
+    if (!canEditTeam(scope, String(b.team)))
+      return NextResponse.json({ error: '대상 팀 권한이 없습니다.' }, { status: 403 })
+    data.team = String(b.team)
+  }
 
   const updated = await prisma.task.update({ where: { id }, data })
   return NextResponse.json(updated)
@@ -40,11 +38,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard()
   if (g.res) return g.res
-  const { role, team } = g.session.user
   const { id } = await params
-  const { task, ok } = await canEdit(id, role, team)
+  const task = await prisma.task.findUnique({ where: { id } })
   if (!task) return NextResponse.json({ error: '항목을 찾을 수 없습니다.' }, { status: 404 })
-  if (!ok) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+  const scope = await editableTeams(g.session)
+  if (!canEditTeam(scope, task.team)) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
   await prisma.task.delete({ where: { id } })
   return NextResponse.json({ ok: true })
 }

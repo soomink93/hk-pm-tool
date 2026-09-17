@@ -42,16 +42,20 @@ export function TaskBoard({
   myTeam,
   teams,
   role,
+  editableTeams,
 }: {
   tasks: Task[]
   myTeam: string
   teams: string[]
   role: string
+  editableTeams: 'all' | string[]
 }) {
   const router = useRouter()
-  const privileged = role === 'admin' || role === 'executive'
-  const canCreate = role !== 'chairman'
-  const editable = (t: Task) => privileged || (role === 'teamlead' && t.team === myTeam)
+  const canEditT = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
+  const myTeams = editableTeams === 'all' ? teams : teams.filter((t) => editableTeams.includes(t))
+  const privileged = role !== 'teamlead' // 팀 필터 노출(여러 팀 조회 가능)
+  const canCreate = myTeams.length > 0
+  const editable = (t: Task) => canEditT(t.team)
 
   const [open, setOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -63,7 +67,7 @@ export function TaskBoard({
 
   function openAdd() {
     setEditId(null)
-    setForm(emptyForm(role === 'teamlead' ? myTeam : filter !== 'all' ? filter : teams[0] || ''))
+    setForm(emptyForm(role === 'teamlead' ? myTeam : myTeams.includes(filter) ? filter : myTeams[0] || ''))
     setOpen(true)
   }
   function openEdit(t: Task) {
@@ -196,10 +200,10 @@ export function TaskBoard({
         <Field label="설명">
           <textarea className={`${inputClass} min-h-16`} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
         </Field>
-        {privileged && (
+        {role !== 'teamlead' && (
           <Field label="담당 팀">
             <select className={inputClass} value={form.team} onChange={(e) => setForm({ ...form, team: e.target.value })}>
-              {teams.map((t) => (
+              {myTeams.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </select>

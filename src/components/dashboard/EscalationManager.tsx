@@ -28,16 +28,20 @@ function statusTone(s: string): 'green' | 'yellow' | 'red' {
 export function EscalationManager({
   escalations,
   teams,
-  canEdit,
+  editableTeams,
 }: {
   escalations: Escalation[]
   teams: string[]
-  canEdit: boolean
+  editableTeams: 'all' | string[]
 }) {
   const router = useRouter()
+  const canEdit = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
+  const myTeams = editableTeams === 'all' ? teams : teams.filter((t) => editableTeams.includes(t))
+  const canAny = myTeams.length > 0
+
   const [open, setOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState<Record<string, string>>(emptyForm(teams[0] ?? ''))
+  const [form, setForm] = useState<Record<string, string>>(emptyForm(myTeams[0] ?? ''))
   const [busy, setBusy] = useState(false)
 
   const openCount = escalations.filter((e) => e.status !== '완료').length
@@ -46,7 +50,7 @@ export function EscalationManager({
 
   function openAdd() {
     setEditId(null)
-    setForm(emptyForm(teams[0] ?? ''))
+    setForm(emptyForm(myTeams[0] ?? ''))
     setOpen(true)
   }
   function openEdit(e: Escalation) {
@@ -78,7 +82,7 @@ export function EscalationManager({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-base font-bold text-navy">에스컬레이션 트래커</h1>
-        {canEdit && (
+        {canAny && (
           <Button onClick={openAdd}>
             <Plus size={14} /> 항목 추가
           </Button>
@@ -104,7 +108,7 @@ export function EscalationManager({
                 <th className="py-2.5">필요 결정</th>
                 <th className="py-2.5">기한</th>
                 <th className="py-2.5">상태</th>
-                {canEdit && <th className="py-2.5" />}
+                {canAny && <th className="py-2.5" />}
               </tr>
             </thead>
             <tbody>
@@ -120,16 +124,18 @@ export function EscalationManager({
                       {e.deadline}
                     </td>
                     <td className="py-2.5"><Badge tone={statusTone(e.status)}>{e.status}</Badge></td>
-                    {canEdit && (
+                    {canAny && (
                       <td className="py-2.5">
-                        <div className="flex gap-1">
-                          <button onClick={() => openEdit(e)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
-                            <Pencil size={14} />
-                          </button>
-                          <button onClick={() => remove(e.id)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="삭제">
-                            <X size={15} />
-                          </button>
-                        </div>
+                        {canEdit(e.dept) && (
+                          <div className="flex gap-1">
+                            <button onClick={() => openEdit(e)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
+                              <Pencil size={14} />
+                            </button>
+                            <button onClick={() => remove(e.id)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="삭제">
+                              <X size={15} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     )}
                   </tr>
@@ -151,7 +157,7 @@ export function EscalationManager({
         </Field>
         <Field label="요청 부서">
           <select className={inputClass} value={form.dept} onChange={(e) => setForm({ ...form, dept: e.target.value })}>
-            {teams.map((t) => (
+            {myTeams.map((t) => (
               <option key={t}>{t}</option>
             ))}
           </select>

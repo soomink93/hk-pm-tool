@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { TaskStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
+import { editableTeams, canEditTeam } from '@/lib/scope'
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done']
 
@@ -18,7 +19,6 @@ export async function POST(req: Request) {
   const g = await guard()
   if (g.res) return g.res
   const { id: userId, name, role, team } = g.session.user
-  if (role === 'chairman') return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
 
   const b = await req.json()
   const title = String(b.title ?? '').trim()
@@ -27,8 +27,11 @@ export async function POST(req: Request) {
   const taskTeam = role === 'teamlead' ? team ?? '' : String(b.team ?? '').trim()
   if (!taskTeam) return NextResponse.json({ error: '담당 팀을 선택하세요.' }, { status: 400 })
 
-  const status = STATUSES.includes(b.status) ? (b.status as TaskStatus) : 'todo'
+  const scope = await editableTeams(g.session)
+  if (!canEditTeam(scope, taskTeam))
+    return NextResponse.json({ error: '해당 팀의 작업을 만들 권한이 없습니다.' }, { status: 403 })
 
+  const status = STATUSES.includes(b.status) ? (b.status as TaskStatus) : 'todo'
   const task = await prisma.task.create({
     data: {
       title,

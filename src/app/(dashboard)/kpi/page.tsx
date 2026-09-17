@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { can } from '@/lib/rbac'
+import { editableTeams, scopeToArray } from '@/lib/scope'
 import { KpiManager } from '@/components/dashboard/KpiManager'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +15,7 @@ export default async function KpiPage() {
     prisma.kpi.findMany({ where, orderBy: { team: 'asc' } }),
     prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
   ])
+  const scope = scopeToArray(await editableTeams(session!))
 
   return (
     <KpiManager
@@ -27,7 +28,7 @@ export default async function KpiPage() {
         unit: k.unit,
       }))}
       teams={teams.map((t) => t.name)}
-      canEdit={can(role, 'kpi:write')}
+      editableTeams={scope}
     />
   )
 }

@@ -20,14 +20,16 @@ export const authConfig = {
         token.uid = user.id
         token.role = (user as { role?: string }).role
         token.team = (user as { team?: string }).team
+        token.department = (user as { department?: string }).department
       }
       return token
     },
     session({ session, token }) {
       if (session.user) {
         session.user.id = (token.uid as string) ?? ''
-        session.user.role = token.role as 'admin' | 'chairman' | 'executive' | 'teamlead'
+        session.user.role = token.role as 'admin' | 'chairman' | 'president' | 'executive' | 'teamlead'
         session.user.team = (token.team as string) ?? ''
+        session.user.department = (token.department as string) ?? ''
       }
       return session
     },

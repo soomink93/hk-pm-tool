@@ -1,6 +1,6 @@
 import { TABS } from './constants'
 
-export type Role = 'admin' | 'chairman' | 'executive' | 'teamlead'
+export type Role = 'admin' | 'chairman' | 'president' | 'executive' | 'teamlead'
 
 export type Action =
   | 'kpi:write'
@@ -9,17 +9,20 @@ export type Action =
   | 'escalation:write'
   | 'user:manage'
 
+// 전체 편집 권한(부문 무관): 관리자·회장·사장
+export const FULL_EDIT_ROLES: Role[] = ['admin', 'chairman', 'president']
+export const isFullEditor = (role: Role): boolean => FULL_EDIT_ROLES.includes(role)
+
 const MATRIX: Record<Action, Role[]> = {
-  'kpi:write': ['executive'],
-  'decision:write': ['executive'],
-  'decision:view': ['chairman', 'executive'],
-  'escalation:write': ['executive', 'teamlead'],
-  'user:manage': ['chairman', 'executive'],
+  'kpi:write': ['executive'], // + 부문 팀 범위로 추가 제한
+  'decision:write': [], // 전체 편집자만
+  'decision:view': ['executive'],
+  'escalation:write': ['executive', 'teamlead'], // + 부문/팀 범위
+  'user:manage': [], // 전체 편집자만
 }
 
-// admin(최고관리자)은 모든 권한 허용
 export const can = (role: Role, action: Action): boolean =>
-  role === 'admin' || MATRIX[action].includes(role)
+  isFullEditor(role) || MATRIX[action].includes(role)
 
 export const visibleTabs = (role: Role): string[] =>
   TABS.filter((t) => (t.roles as readonly string[]).includes(role)).map((t) => t.id)

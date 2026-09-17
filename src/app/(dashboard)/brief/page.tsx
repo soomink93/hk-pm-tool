@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { editableTeams, scopeToArray } from '@/lib/scope'
 import { TeamleadBrief } from '@/components/dashboard/TeamleadBrief'
 import { TeamsBriefView } from '@/components/dashboard/TeamsBriefView'
 
@@ -49,8 +50,7 @@ export default async function BriefPage() {
         risk: t.risk,
         escalation: t.escalation,
       }))}
-      canEdit={role === 'executive' || role === 'admin'}
-      readOnly={role === 'chairman'}
+      editableTeams={scopeToArray(await editableTeams(session!))}
     />
   )
 }

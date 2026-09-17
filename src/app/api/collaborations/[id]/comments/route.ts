@@ -2,19 +2,21 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { createCollabNotifications } from '@/lib/notify'
+import { isFullEditor, type Role } from '@/lib/rbac'
+import { editableTeams, canEditTeam } from '@/lib/scope'
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard()
   if (g.res) return g.res
-  const { id: userId, name, role, team } = g.session.user
+  const { id: userId, name, role } = g.session.user
   const { id } = await params
 
   const collab = await prisma.collaboration.findUnique({ where: { id } })
   if (!collab) return NextResponse.json({ error: '항목을 찾을 수 없습니다.' }, { status: 404 })
 
-  const privileged = role === 'executive' || role === 'admin'
-  const involved = !!team && (team === collab.fromTeam || team === collab.toTeam)
-  if (!privileged && !involved) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+  const scope = await editableTeams(g.session)
+  const involved = isFullEditor(role as Role) || canEditTeam(scope, collab.fromTeam) || canEditTeam(scope, collab.toTeam)
+  if (!involved) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
 
   const b = await req.json()
   const body = String(b.body ?? '').trim()

@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { editableTeams, scopeToArray } from '@/lib/scope'
 import { CollaborationManager } from '@/components/dashboard/CollaborationManager'
 
 export const dynamic = 'force-dynamic'
@@ -44,7 +45,7 @@ export default async function CollaborationPage() {
       }))}
       myTeam={team ?? ''}
       teams={teamRows.map((t) => t.name)}
-      privileged={role === 'executive' || role === 'admin'}
+      editableTeams={scopeToArray(await editableTeams(session!))}
     />
   )
 }

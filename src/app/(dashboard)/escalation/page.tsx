@@ -1,13 +1,12 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { can } from '@/lib/rbac'
+import { editableTeams, scopeToArray } from '@/lib/scope'
 import { EscalationManager } from '@/components/dashboard/EscalationManager'
 
 export const dynamic = 'force-dynamic'
 
 export default async function EscalationPage() {
   const session = await auth()
-  const role = session!.user.role
 
   const [escalations, teams] = await Promise.all([
     prisma.escalation.findMany({ orderBy: { deadline: 'asc' } }),
@@ -26,7 +25,7 @@ export default async function EscalationPage() {
         status: e.status,
       }))}
       teams={teams.map((t) => t.name)}
-      canEdit={can(role, 'escalation:write')}
+      editableTeams={scopeToArray(await editableTeams(session!))}
     />
   )
 }

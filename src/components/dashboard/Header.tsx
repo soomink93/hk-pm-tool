@@ -7,6 +7,7 @@ import { GlobalSearch } from './GlobalSearch'
 const ROLE_LABEL: Record<Role, string> = {
   admin: '관리자',
   chairman: '회장님',
+  president: '사장',
   executive: '임원',
   teamlead: '팀장',
 }
@@ -14,6 +15,7 @@ const ROLE_LABEL: Record<Role, string> = {
 const ROLE_CHIP: Record<Role, string> = {
   admin: 'bg-rose-600 text-white',
   chairman: 'bg-amber-300 text-slate-900',
+  president: 'bg-purple-600 text-white',
   executive: 'bg-green-600 text-white',
   teamlead: 'bg-navy-light text-white',
 }

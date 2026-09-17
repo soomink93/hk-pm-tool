@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { editableTeams, scopeToArray } from '@/lib/scope'
 import { TaskBoard } from '@/components/dashboard/TaskBoard'
 
 export const dynamic = 'force-dynamic'
@@ -35,6 +36,7 @@ export default async function TasksPage() {
       myTeam={team ?? ''}
       teams={teamRows.map((t) => t.name)}
       role={role}
+      editableTeams={scopeToArray(await editableTeams(session!))}
     />
   )
 }
