@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, X, KeyRound, Users, Building2 } from 'lucide-react'
+import { Plus, Pencil, X, KeyRound, Users, Building2, RotateCcw } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
@@ -11,54 +11,68 @@ import { STATUS_LABEL } from '@/lib/constants'
 type Role = 'admin' | 'chairman' | 'president' | 'executive' | 'teamlead'
 const ROLE_LABEL: Record<string, string> = { admin: '관리자', chairman: '회장님', president: '사장', executive: '임원', teamlead: '팀장' }
 
-export type UserRow = { id: string; name: string; email: string; role: string; team: string | null }
-export type TeamRow = { id: string; name: string; lead: string; status: string }
+export type UserRow = { id: string; name: string; email: string; role: string; team: string | null; department: string | null }
+export type TeamRow = { id: string; name: string; lead: string; status: string; department: string | null }
+
+const emptyUser = { name: '', email: '', role: 'teamlead' as Role, team: '', department: '', password: '' }
+const emptyTeam = { name: '', lead: '', status: 'green', department: '' }
 
 export function SettingsManager({
   users,
   teams,
+  departments,
   currentUserId,
   canManage,
 }: {
   users: UserRow[]
   teams: TeamRow[]
+  departments: string[]
   currentUserId: string
   canManage: boolean
 }) {
   const router = useRouter()
-
-  // 사용자 추가 모달
-  const [userOpen, setUserOpen] = useState(false)
-  const [userForm, setUserForm] = useState({ name: '', email: '', role: 'teamlead' as Role, team: '', password: '' })
   const [busy, setBusy] = useState(false)
+
+  // 사용자 모달 (추가/수정)
+  const [userOpen, setUserOpen] = useState(false)
+  const [userEditId, setUserEditId] = useState<string | null>(null)
+  const [userForm, setUserForm] = useState({ ...emptyUser })
 
   // 팀 모달
   const [teamOpen, setTeamOpen] = useState(false)
   const [teamEditId, setTeamEditId] = useState<string | null>(null)
-  const [teamForm, setTeamForm] = useState({ name: '', lead: '', status: 'green' })
+  const [teamForm, setTeamForm] = useState({ ...emptyTeam })
 
-  // 비밀번호
+  // 내 비밀번호
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
   const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
-  async function addUser() {
+  function openAddUser() {
+    setUserEditId(null)
+    setUserForm({ ...emptyUser })
+    setUserOpen(true)
+  }
+  function openEditUser(u: UserRow) {
+    setUserEditId(u.id)
+    setUserForm({ name: u.name, email: u.email, role: u.role as Role, team: u.team ?? '', department: u.department ?? '', password: '' })
+    setUserOpen(true)
+  }
+  async function saveUser() {
     setBusy(true)
-    const res = await fetch('/api/users', {
-      method: 'POST',
+    const res = await fetch(userEditId ? `/api/users/${userEditId}` : '/api/users', {
+      method: userEditId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userForm),
     })
     setBusy(false)
     if (res.ok) {
       setUserOpen(false)
-      setUserForm({ name: '', email: '', role: 'teamlead', team: '', password: '' })
       router.refresh()
     } else {
       const d = await res.json().catch(() => ({}))
       alert(d.error ?? '저장에 실패했습니다.')
     }
   }
-
   async function delUser(id: string) {
     if (!confirm('삭제하시겠습니까?')) return
     const res = await fetch(`/api/users/${id}`, { method: 'DELETE' })
@@ -68,15 +82,27 @@ export function SettingsManager({
       alert(d.error ?? '삭제에 실패했습니다.')
     }
   }
+  async function resetPassword(u: UserRow) {
+    if (!confirm(`${u.name}님의 비밀번호를 초기화하시겠습니까?`)) return
+    const res = await fetch(`/api/users/${u.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resetPassword: true }),
+    })
+    if (res.ok) {
+      const d = await res.json()
+      alert(`초기화 완료.\n임시 비밀번호: ${d.password}\n(첫 로그인 시 변경이 강제됩니다.)`)
+    } else alert('초기화에 실패했습니다.')
+  }
 
   function openAddTeam() {
     setTeamEditId(null)
-    setTeamForm({ name: '', lead: '', status: 'green' })
+    setTeamForm({ ...emptyTeam })
     setTeamOpen(true)
   }
   function openEditTeam(t: TeamRow) {
     setTeamEditId(t.id)
-    setTeamForm({ name: t.name, lead: t.lead, status: t.status })
+    setTeamForm({ name: t.name, lead: t.lead, status: t.status, department: t.department ?? '' })
     setTeamOpen(true)
   }
   async function saveTeam() {
@@ -133,14 +159,20 @@ export function SettingsManager({
           </h2>
           <div className="divide-y divide-slate-50">
             {users.map((u) => (
-              <div key={u.id} className="flex items-center gap-2 py-2">
+              <div key={u.id} className="flex items-center gap-1 py-2">
                 <div className="flex-1">
                   <div className="text-[13px] font-bold">{u.name}</div>
                   <div className="text-xs text-slate-400">
                     {u.email} · {ROLE_LABEL[u.role] ?? u.role}
-                    {u.team ? ` · ${u.team}` : ''}
+                    {u.department ? ` · ${u.department}` : u.team ? ` · ${u.team}` : ''}
                   </div>
                 </div>
+                <button onClick={() => resetPassword(u)} className="rounded p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-600" title="비밀번호 초기화">
+                  <RotateCcw size={14} />
+                </button>
+                <button onClick={() => openEditUser(u)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
+                  <Pencil size={14} />
+                </button>
                 {u.id !== currentUserId && (
                   <button onClick={() => delUser(u.id)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="삭제">
                     <X size={15} />
@@ -150,7 +182,7 @@ export function SettingsManager({
             ))}
           </div>
           <div className="mt-3">
-            <Button onClick={() => setUserOpen(true)}>
+            <Button onClick={openAddUser}>
               <Plus size={14} /> 사용자 추가
             </Button>
           </div>
@@ -164,11 +196,12 @@ export function SettingsManager({
           </h2>
           <div className="divide-y divide-slate-50">
             {teams.map((t) => (
-              <div key={t.id} className="flex items-center gap-2 py-2">
+              <div key={t.id} className="flex items-center gap-1 py-2">
                 <div className="flex-1">
                   <div className="text-[13px] font-bold">{t.name}</div>
                   <div className="text-xs text-slate-400">
                     팀장: {t.lead} · {STATUS_LABEL[t.status as keyof typeof STATUS_LABEL] ?? t.status}
+                    {t.department ? ` · ${t.department}` : ''}
                   </div>
                 </div>
                 <button onClick={() => openEditTeam(t)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
@@ -209,13 +242,19 @@ export function SettingsManager({
         </div>
       </Card>
 
-      {/* 사용자 추가 모달 */}
-      <Modal open={userOpen} onClose={() => setUserOpen(false)} title="사용자 추가">
+      <datalist id="dept-list">
+        {departments.map((d) => (
+          <option key={d} value={d} />
+        ))}
+      </datalist>
+
+      {/* 사용자 추가/수정 모달 */}
+      <Modal open={userOpen} onClose={() => setUserOpen(false)} title={userEditId ? '사용자 수정' : '사용자 추가'}>
         <Field label="이름">
           <input className={inputClass} value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} />
         </Field>
         <Field label="이메일">
-          <input type="email" className={inputClass} value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} placeholder="name@hk.co.kr" />
+          <input type="email" className={inputClass} value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} readOnly={!!userEditId} placeholder="name@hk-global.com" />
         </Field>
         <Field label="역할">
           <select className={inputClass} value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value as Role })}>
@@ -226,31 +265,31 @@ export function SettingsManager({
             <option value="admin">관리자</option>
           </select>
         </Field>
-        <Field label="팀 / 부문">
+        <Field label="팀">
           <input className={inputClass} value={userForm.team} onChange={(e) => setUserForm({ ...userForm, team: e.target.value })} placeholder="예) 영업팀" />
         </Field>
-        <Field label="초기 비밀번호">
-          <input type="password" className={inputClass} value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} />
+        <Field label="담당 부문 (임원)">
+          <input className={inputClass} list="dept-list" value={userForm.department} onChange={(e) => setUserForm({ ...userForm, department: e.target.value })} placeholder="예) 기술연구소 (임원만)" />
+        </Field>
+        <Field label={userEditId ? '새 비밀번호 (변경 시에만)' : '초기 비밀번호'}>
+          <input type="password" className={inputClass} value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} placeholder={userEditId ? '비워두면 유지' : ''} />
         </Field>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setUserOpen(false)}>취소</Button>
-          <Button onClick={addUser} disabled={busy}>{busy ? '저장 중…' : '저장'}</Button>
+          <Button onClick={saveUser} disabled={busy}>{busy ? '저장 중…' : '저장'}</Button>
         </div>
       </Modal>
 
       {/* 팀 추가/수정 모달 */}
       <Modal open={teamOpen} onClose={() => setTeamOpen(false)} title={teamEditId ? '팀 수정' : '팀 추가'}>
         <Field label="팀명">
-          <input
-            className={inputClass}
-            value={teamForm.name}
-            onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
-            readOnly={!!teamEditId}
-            placeholder="예) 기획팀"
-          />
+          <input className={inputClass} value={teamForm.name} onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })} readOnly={!!teamEditId} placeholder="예) 기획팀" />
         </Field>
         <Field label="팀장 이름">
           <input className={inputClass} value={teamForm.lead} onChange={(e) => setTeamForm({ ...teamForm, lead: e.target.value })} placeholder="예) 홍길동" />
+        </Field>
+        <Field label="소속 부문">
+          <input className={inputClass} list="dept-list" value={teamForm.department} onChange={(e) => setTeamForm({ ...teamForm, department: e.target.value })} placeholder="예) 기술연구소" />
         </Field>
         <Field label="상태">
           <select className={inputClass} value={teamForm.status} onChange={(e) => setTeamForm({ ...teamForm, status: e.target.value })}>

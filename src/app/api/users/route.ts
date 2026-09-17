@@ -4,14 +4,14 @@ import type { Role } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 
-const ROLES = ['admin', 'chairman', 'executive', 'teamlead']
+const ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
 
 export async function GET() {
   const g = await guard('user:manage')
   if (g.res) return g.res
   const users = await prisma.user.findMany({
     orderBy: { createdAt: 'asc' },
-    select: { id: true, name: true, email: true, role: true, team: true },
+    select: { id: true, name: true, email: true, role: true, team: true, department: true },
   })
   return NextResponse.json(users)
 }
@@ -36,9 +36,11 @@ export async function POST(req: Request) {
       name,
       role: role as Role,
       team: String(b.team ?? '') || null,
+      department: String(b.department ?? '') || null,
       passwordHash: bcrypt.hashSync(password, 10),
+      mustChangePassword: true,
     },
-    select: { id: true, name: true, email: true, role: true, team: true },
+    select: { id: true, name: true, email: true, role: true, team: true, department: true },
   })
   return NextResponse.json(user, { status: 201 })
 }

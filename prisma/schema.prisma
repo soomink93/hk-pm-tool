@@ -29,6 +29,7 @@ model User {
   role         Role
   team         String?
   department   String?
+  mustChangePassword Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

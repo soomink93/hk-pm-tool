@@ -14,18 +14,21 @@ export default async function SettingsPage() {
     canManage
       ? prisma.user.findMany({
           orderBy: { createdAt: 'asc' },
-          select: { id: true, name: true, email: true, role: true, team: true },
+          select: { id: true, name: true, email: true, role: true, team: true, department: true },
         })
       : Promise.resolve([]),
     canManage
-      ? prisma.team.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, lead: true, status: true } })
+      ? prisma.team.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, lead: true, status: true, department: true } })
       : Promise.resolve([]),
   ])
+
+  const departments = [...new Set(teams.map((t) => t.department).filter((d): d is string => !!d))].sort()
 
   return (
     <SettingsManager
       users={users}
       teams={teams}
+      departments={departments}
       currentUserId={session!.user.id}
       canManage={canManage}
     />
