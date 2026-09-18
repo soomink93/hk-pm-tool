@@ -30,6 +30,7 @@ model User {
   team         String?
   department   String?
   mustChangePassword Boolean @default(false)
+  assignedTasks Task[]  @relation("TaskAssignee")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -119,6 +120,8 @@ model Task {
   description   String     @default("")
   team          String
   assignee      String     @default("")
+  assigneeId    String?
+  assigneeUser  User?      @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   status        TaskStatus @default(todo)
   priority      String     @default("mid")
   dueDate       String     @default("")
@@ -131,6 +134,7 @@ model Task {
 
   @@index([team, status])
   @@index([collaborationId])
+  @@index([assigneeId])
 }
 
 model Collaboration {

@@ -16,12 +16,15 @@ export type Task = {
   description: string
   team: string
   assignee: string
+  assigneeId: string | null
   status: string
   priority: string
   dueDate: string
   createdByName: string
   collabFrom?: string | null
 }
+
+export type UserOpt = { id: string; name: string; team: string }
 
 const PRIO_TONE: Record<string, 'red' | 'yellow' | 'green'> = { high: 'red', mid: 'yellow', low: 'green' }
 const todayISO = () => new Date().toISOString().slice(0, 10)
@@ -31,7 +34,7 @@ const emptyForm = (team: string) => ({
   title: '',
   description: '',
   team,
-  assignee: '',
+  assigneeId: '',
   status: 'todo',
   priority: 'mid',
   dueDate: '',
@@ -41,12 +44,14 @@ export function TaskBoard({
   tasks,
   myTeam,
   teams,
+  users,
   role,
   editableTeams,
 }: {
   tasks: Task[]
   myTeam: string
   teams: string[]
+  users: UserOpt[]
   role: string
   editableTeams: 'all' | string[]
 }) {
@@ -72,7 +77,7 @@ export function TaskBoard({
   }
   function openEdit(t: Task) {
     setEditId(t.id)
-    setForm({ title: t.title, description: t.description, team: t.team, assignee: t.assignee, status: t.status, priority: t.priority, dueDate: t.dueDate })
+    setForm({ title: t.title, description: t.description, team: t.team, assigneeId: t.assigneeId ?? '', status: t.status, priority: t.priority, dueDate: t.dueDate })
     setOpen(true)
   }
   async function save() {
@@ -211,7 +216,12 @@ export function TaskBoard({
         )}
         <div className="grid grid-cols-2 gap-3">
           <Field label="담당자">
-            <input className={inputClass} value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })} placeholder="이름" />
+            <select className={inputClass} value={form.assigneeId} onChange={(e) => setForm({ ...form, assigneeId: e.target.value })}>
+              <option value="">미지정</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>{u.name}{u.team ? ` (${u.team})` : ''}</option>
+              ))}
+            </select>
           </Field>
           <Field label="마감일">
             <input type="date" className={inputClass} value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />

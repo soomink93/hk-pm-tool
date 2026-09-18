@@ -33,12 +33,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '해당 팀의 작업을 만들 권한이 없습니다.' }, { status: 403 })
 
   const status = STATUSES.includes(b.status) ? (b.status as TaskStatus) : 'todo'
+
+  // 담당자: 계정(assigneeId) 우선 — 이름은 계정에서 파생. 계정이 없으면 자유 입력 문자열 유지.
+  let assigneeId: string | null = null
+  let assignee = String(b.assignee ?? '')
+  if (b.assigneeId) {
+    const u = await prisma.user.findUnique({ where: { id: String(b.assigneeId) }, select: { id: true, name: true } })
+    if (u) {
+      assigneeId = u.id
+      assignee = u.name
+    }
+  }
+
   const task = await prisma.task.create({
     data: {
       title,
       description: String(b.description ?? ''),
       team: taskTeam,
-      assignee: String(b.assignee ?? ''),
+      assignee,
+      assigneeId,
       status,
       priority: String(b.priority ?? 'mid'),
       dueDate: String(b.dueDate ?? ''),
