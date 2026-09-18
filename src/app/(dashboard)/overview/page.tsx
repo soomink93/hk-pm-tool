@@ -48,6 +48,23 @@ export default async function OverviewPage() {
     .map((s) => ({ label: TASK_STATUS_LABEL[s], value: tasks.filter((t) => t.status === s).length, color: TASK_COLOR[s] }))
     .filter((d) => d.value > 0)
 
+  // 최근 7일 vs 지난 7일 추세
+  const d7 = new Date(Date.now() - 7 * 86_400_000)
+  const d14 = new Date(Date.now() - 14 * 86_400_000)
+  const [nc7, ncp, dt7, dtp, ne7, nep] = await Promise.all([
+    prisma.collaboration.count({ where: { createdAt: { gte: d7 } } }),
+    prisma.collaboration.count({ where: { createdAt: { gte: d14, lt: d7 } } }),
+    prisma.task.count({ where: { status: 'done', updatedAt: { gte: d7 } } }),
+    prisma.task.count({ where: { status: 'done', updatedAt: { gte: d14, lt: d7 } } }),
+    prisma.escalation.count({ where: { createdAt: { gte: d7 } } }),
+    prisma.escalation.count({ where: { createdAt: { gte: d14, lt: d7 } } }),
+  ])
+  const trend = [
+    { label: '신규 협업', now: nc7, prev: ncp },
+    { label: '완료 작업', now: dt7, prev: dtp },
+    { label: '신규 에스컬레이션', now: ne7, prev: nep },
+  ]
+
   // 에스컬레이션
   const openEscal = escalations.filter((e) => e.status !== '완료')
   const urgentEscal = openEscal.filter((e) => isUrgent(e.deadline))
@@ -69,6 +86,26 @@ export default async function OverviewPage() {
         attentionTasks={attentionTasks}
         pendingEscalations={pendingEscalations}
       />
+
+      <Card>
+        <h2 className="mb-3 text-base font-bold text-navy">최근 7일 활동 <span className="text-xs font-normal text-slate-400">(지난 7일 대비)</span></h2>
+        <div className="grid grid-cols-3 gap-3">
+          {trend.map((t) => {
+            const delta = t.now - t.prev
+            return (
+              <div key={t.label} className="rounded-lg bg-canvas px-3 py-2.5">
+                <div className="text-[11px] font-semibold text-slate-500">{t.label}</div>
+                <div className="mt-0.5 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-extrabold text-navy">{t.now}</span>
+                  <span className={`text-xs font-bold ${delta > 0 ? 'text-[#70AD47]' : delta < 0 ? 'text-[#C00000]' : 'text-slate-400'}`}>
+                    {delta > 0 ? `▲${delta}` : delta < 0 ? `▼${Math.abs(delta)}` : '—'}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         <StatCard title="진행 중 협업" value={activeCollabs.length} sub="요청·수락·진행" valueClass="text-navy-light" />

@@ -59,15 +59,18 @@ model Kpi {
 }
 
 model Decision {
-  id        String   @id @default(cuid())
-  date      String
-  content   String
-  tier      String
-  decider   String
-  priority  String
-  status    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  date          String
+  content       String
+  tier          String
+  decider       String
+  priority      String
+  status        String
+  createdById   String?
+  createdByName String?
+  escalationId  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Escalation {
@@ -145,6 +148,20 @@ model Collaboration {
 
   @@index([toTeam, status])
   @@index([fromTeam, status])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actorName String
+  action    String
+  entity    String
+  entityId  String?
+  summary   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity])
 }
 
 model CollaborationComment {

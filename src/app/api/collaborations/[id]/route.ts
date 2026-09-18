@@ -6,6 +6,7 @@ import { createCollabNotifications } from '@/lib/notify'
 import { COLLAB_STATE_LABEL } from '@/lib/constants'
 import { isFullEditor, type Role } from '@/lib/rbac'
 import { editableTeams, canEditTeam } from '@/lib/scope'
+import { logAudit } from '@/lib/audit'
 
 const VALID: CollabStatus[] = ['requested', 'accepted', 'in_progress', 'done', 'declined']
 
@@ -57,6 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     kind: 'status',
     actorId: userId,
   })
+  await logAudit(g.session, 'status', 'collaboration', id, `협업 ${COLLAB_STATE_LABEL[status]}: ${collab.fromTeam}→${collab.toTeam} ${collab.content}`)
   return NextResponse.json(updated)
 }
 
@@ -74,5 +76,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: '요청한 팀만 취소할 수 있습니다.' }, { status: 403 })
 
   await prisma.collaboration.delete({ where: { id } })
+  await logAudit(g.session, 'delete', 'collaboration', id, `협업 취소: ${collab.fromTeam}→${collab.toTeam} ${collab.content}`)
   return NextResponse.json({ ok: true })
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { TeamStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
+import { logAudit } from '@/lib/audit'
 
 export async function GET() {
   const g = await guard()
@@ -29,5 +30,6 @@ export async function POST(req: Request) {
       submitted: false,
     },
   })
+  await logAudit(g.session, 'create', 'team', team.id, `팀 추가: ${team.name}`)
   return NextResponse.json(team, { status: 201 })
 }

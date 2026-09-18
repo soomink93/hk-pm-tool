@@ -15,7 +15,7 @@ export const isFullEditor = (role: Role): boolean => FULL_EDIT_ROLES.includes(ro
 
 const MATRIX: Record<Action, Role[]> = {
   'kpi:write': ['executive'], // + 부문 팀 범위로 추가 제한
-  'decision:write': [], // 전체 편집자만
+  'decision:write': ['executive'], // 임원은 본인이 작성한 것만 수정/삭제
   'decision:view': ['executive'],
   'escalation:write': ['executive', 'teamlead'], // + 부문/팀 범위
   'user:manage': [], // 전체 편집자만

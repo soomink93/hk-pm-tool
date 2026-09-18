@@ -3,6 +3,7 @@ import type { TaskStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
+import { logAudit } from '@/lib/audit'
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done']
 
@@ -45,5 +46,6 @@ export async function POST(req: Request) {
       createdByName: name ?? '',
     },
   })
+  await logAudit(g.session, 'create', 'task', task.id, `작업 추가: ${task.title} (${taskTeam})`)
   return NextResponse.json(task, { status: 201 })
 }

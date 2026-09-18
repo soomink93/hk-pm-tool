@@ -3,6 +3,7 @@ import type { Prisma, TaskStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
+import { logAudit } from '@/lib/audit'
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done']
 
@@ -32,6 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const updated = await prisma.task.update({ where: { id }, data })
+  await logAudit(g.session, 'update', 'task', id, `작업 수정: ${updated.title} (${updated.status})`)
   return NextResponse.json(updated)
 }
 
@@ -44,5 +46,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const scope = await editableTeams(g.session)
   if (!canEditTeam(scope, task.team)) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
   await prisma.task.delete({ where: { id } })
+  await logAudit(g.session, 'delete', 'task', id, `작업 삭제: ${task.title}`)
   return NextResponse.json({ ok: true })
 }

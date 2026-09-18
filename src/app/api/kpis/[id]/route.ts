@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
+import { logAudit } from '@/lib/audit'
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard('kpi:write')
@@ -25,6 +26,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       unit: String(b.unit ?? ''),
     },
   })
+  await logAudit(g.session, 'update', 'kpi', id, `KPI 수정: ${updated.team} ${updated.metric}`)
   return NextResponse.json(updated)
 }
 
@@ -38,5 +40,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!canEditTeam(scope, kpi.team))
     return NextResponse.json({ error: '해당 팀을 수정할 권한이 없습니다.' }, { status: 403 })
   await prisma.kpi.delete({ where: { id } })
+  await logAudit(g.session, 'delete', 'kpi', id, `KPI 삭제: ${kpi.team} ${kpi.metric}`)
   return NextResponse.json({ ok: true })
 }

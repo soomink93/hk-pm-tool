@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import type { Role } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
+import { logAudit } from '@/lib/audit'
 
 const ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
 
@@ -42,5 +43,6 @@ export async function POST(req: Request) {
     },
     select: { id: true, name: true, email: true, role: true, team: true, department: true },
   })
+  await logAudit(g.session, 'create', 'user', user.id, `사용자 추가: ${user.name} (${user.email}, ${user.role})`)
   return NextResponse.json(user, { status: 201 })
 }

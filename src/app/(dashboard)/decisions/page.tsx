@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { can } from '@/lib/rbac'
+import { can, isFullEditor } from '@/lib/rbac'
 import { DecisionsManager } from '@/components/dashboard/DecisionsManager'
 
 export const dynamic = 'force-dynamic'
@@ -23,8 +23,12 @@ export default async function DecisionsPage() {
         decider: d.decider,
         priority: d.priority,
         status: d.status,
+        createdById: d.createdById,
+        fromEscalation: !!d.escalationId,
       }))}
-      canEdit={can(role, 'decision:write')}
+      canAdd={can(role, 'decision:write')}
+      isFull={isFullEditor(role)}
+      currentUserId={session!.user.id}
     />
   )
 }

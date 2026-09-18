@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
+import { logAudit } from '@/lib/audit'
 
 export async function GET() {
   const g = await guard()
@@ -28,5 +29,6 @@ export async function POST(req: Request) {
       unit: String(b.unit ?? ''),
     },
   })
+  await logAudit(g.session, 'create', 'kpi', kpi.id, `KPI 추가: ${kpi.team} ${kpi.metric}`)
   return NextResponse.json(kpi, { status: 201 })
 }

@@ -17,13 +17,26 @@ export type Decision = {
   decider: string
   priority: string
   status: string
+  createdById: string | null
+  fromEscalation: boolean
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
 const emptyForm = () => ({ date: today(), content: '', tier: '2단계', decider: '', priority: 'mid', status: '진행중' })
 
-export function DecisionsManager({ decisions, canEdit }: { decisions: Decision[]; canEdit: boolean }) {
+export function DecisionsManager({
+  decisions,
+  canAdd,
+  isFull,
+  currentUserId,
+}: {
+  decisions: Decision[]
+  canAdd: boolean
+  isFull: boolean
+  currentUserId: string
+}) {
   const router = useRouter()
+  const canEditRow = (d: Decision) => isFull || d.createdById === currentUserId
   const [open, setOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, string>>(emptyForm())
@@ -63,7 +76,7 @@ export function DecisionsManager({ decisions, canEdit }: { decisions: Decision[]
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-base font-bold text-navy">결정 로그</h1>
-        {canEdit && (
+        {canAdd && (
           <Button onClick={openAdd}>
             <Plus size={14} /> 결정 추가
           </Button>
@@ -83,14 +96,17 @@ export function DecisionsManager({ decisions, canEdit }: { decisions: Decision[]
                 <th className="py-2.5">결정자</th>
                 <th className="py-2.5">우선순위</th>
                 <th className="py-2.5">상태</th>
-                {canEdit && <th className="py-2.5" />}
+                <th className="py-2.5" />
               </tr>
             </thead>
             <tbody>
               {decisions.map((d) => (
                 <tr key={d.id} className="border-b border-slate-50 last:border-0">
                   <td className="py-2.5 text-xs text-slate-400">{d.date}</td>
-                  <td className="py-2.5 font-semibold">{d.content}</td>
+                  <td className="py-2.5 font-semibold">
+                    {d.content}
+                    {d.fromEscalation && <Badge tone="blue">에스컬레이션</Badge>}
+                  </td>
                   <td className="py-2.5"><Badge tone="blue">{d.tier}</Badge></td>
                   <td className="py-2.5">{d.decider}</td>
                   <td className={`py-2.5 ${PRIO_CLASS[d.priority as keyof typeof PRIO_CLASS] ?? ''}`}>
@@ -99,8 +115,8 @@ export function DecisionsManager({ decisions, canEdit }: { decisions: Decision[]
                   <td className="py-2.5">
                     <Badge tone={d.status === '완료' ? 'green' : 'yellow'}>{d.status}</Badge>
                   </td>
-                  {canEdit && (
-                    <td className="py-2.5">
+                  <td className="py-2.5">
+                    {canEditRow(d) && (
                       <div className="flex gap-1">
                         <button onClick={() => openEdit(d)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
                           <Pencil size={14} />
@@ -109,8 +125,8 @@ export function DecisionsManager({ decisions, canEdit }: { decisions: Decision[]
                           <X size={15} />
                         </button>
                       </div>
-                    </td>
-                  )}
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

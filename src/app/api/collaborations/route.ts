@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { createCollabNotifications } from '@/lib/notify'
+import { logAudit } from '@/lib/audit'
 
 export async function GET() {
   const g = await guard()
@@ -47,5 +48,6 @@ export async function POST(req: Request) {
     kind: 'request',
     actorId: userId,
   })
+  await logAudit(g.session, 'create', 'collaboration', collab.id, `협업 요청: ${team}→${toTeam} ${content}`)
   return NextResponse.json(collab, { status: 201 })
 }

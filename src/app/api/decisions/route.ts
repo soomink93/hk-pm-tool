@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
+import { logAudit } from '@/lib/audit'
 
 export async function GET() {
   const g = await guard('decision:view')
@@ -12,6 +13,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const g = await guard('decision:write')
   if (g.res) return g.res
+  const { id: userId, name } = g.session.user
   const b = await req.json()
   const decision = await prisma.decision.create({
     data: {
@@ -21,7 +23,10 @@ export async function POST(req: Request) {
       decider: String(b.decider ?? ''),
       priority: String(b.priority ?? 'mid'),
       status: String(b.status ?? '진행중'),
+      createdById: userId,
+      createdByName: name ?? '',
     },
   })
+  await logAudit(g.session, 'create', 'decision', decision.id, `결정 추가: ${decision.content}`)
   return NextResponse.json(decision, { status: 201 })
 }

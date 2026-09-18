@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import type { Prisma, Role } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
+import { logAudit } from '@/lib/audit'
 
 const ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
 
@@ -19,6 +20,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (b.resetPassword) {
     const newPw = `!${user.email.split('@')[0]}@`
     await prisma.user.update({ where: { id }, data: { passwordHash: bcrypt.hashSync(newPw, 10), mustChangePassword: true } })
+    await logAudit(g.session, 'update', 'user', id, `비밀번호 초기화: ${user.name}`)
     return NextResponse.json({ ok: true, password: newPw })
   }
 
@@ -39,6 +41,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data,
     select: { id: true, name: true, email: true, role: true, team: true, department: true },
   })
+  await logAudit(g.session, 'update', 'user', id, `사용자 수정: ${updated.name}`)
   return NextResponse.json(updated)
 }
 
@@ -49,6 +52,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (id === g.session.user.id) {
     return NextResponse.json({ error: '본인 계정은 삭제할 수 없습니다.' }, { status: 400 })
   }
+  const target = await prisma.user.findUnique({ where: { id }, select: { name: true, email: true } })
   await prisma.user.delete({ where: { id } })
+  await logAudit(g.session, 'delete', 'user', id, `사용자 삭제: ${target?.name ?? ''} (${target?.email ?? ''})`)
   return NextResponse.json({ ok: true })
 }
