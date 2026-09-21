@@ -22,6 +22,13 @@ export type MyTask = {
 const PRIO_TONE: Record<string, 'red' | 'yellow' | 'green'> = { high: 'red', mid: 'yellow', low: 'green' }
 const todayISO = () => new Date().toISOString().slice(0, 10)
 const isOverdue = (t: MyTask) => !!t.dueDate && t.dueDate < todayISO() && t.status !== 'done'
+// 마감 임박 우선: 마감일 있는 항목 오름차순, 마감 없는 항목은 맨 뒤
+const byDue = (a: MyTask, b: MyTask) => {
+  if (!a.dueDate && !b.dueDate) return 0
+  if (!a.dueDate) return 1
+  if (!b.dueDate) return -1
+  return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0
+}
 const STATUS_ICON: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   todo: Circle,
   in_progress: Loader2,
@@ -67,7 +74,7 @@ export function MyTasks({ tasks }: { tasks: MyTask[] }) {
         </Card>
       ) : (
         TASK_COLUMNS.map((col) => {
-          const list = tasks.filter((t) => t.status === col)
+          const list = tasks.filter((t) => t.status === col).sort(byDue)
           if (list.length === 0) return null
           const Icon = STATUS_ICON[col]
           return (

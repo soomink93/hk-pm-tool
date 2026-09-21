@@ -182,12 +182,26 @@ export function CollaborationManager({
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ toTeam: '', content: '' })
   const [busy, setBusy] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('active')
+  const [teamFilter, setTeamFilter] = useState('all')
 
   const otherTeams = teams.filter((t) => t !== myTeam)
 
-  const incoming = items.filter((c) => c.toTeam === myTeam)
-  const outgoing = items.filter((c) => c.fromTeam === myTeam)
-  const others = items.filter((c) => c.toTeam !== myTeam && c.fromTeam !== myTeam)
+  const STATUS_FILTERS: { id: string; label: string; match: (s: string) => boolean }[] = [
+    { id: 'all', label: '전체', match: () => true },
+    { id: 'active', label: '진행 중', match: (s) => s === 'requested' || s === 'accepted' || s === 'in_progress' },
+    { id: 'done', label: '완료', match: (s) => s === 'done' },
+    { id: 'declined', label: '거절', match: (s) => s === 'declined' },
+  ]
+  const statusMatch = (STATUS_FILTERS.find((f) => f.id === statusFilter) ?? STATUS_FILTERS[0]).match
+
+  const filtered = items.filter(
+    (c) => statusMatch(c.status) && (teamFilter === 'all' || c.fromTeam === teamFilter || c.toTeam === teamFilter),
+  )
+
+  const incoming = filtered.filter((c) => c.toTeam === myTeam)
+  const outgoing = filtered.filter((c) => c.fromTeam === myTeam)
+  const others = filtered.filter((c) => c.toTeam !== myTeam && c.fromTeam !== myTeam)
 
   function openNew() {
     setForm({ toTeam: otherTeams[0] ?? '', content: '' })
@@ -240,9 +254,44 @@ export function CollaborationManager({
         </Card>
       ) : (
         <>
-          <Section title="받은 요청" list={incoming} />
-          <Section title="보낸 요청" list={outgoing} />
-          <Section title={myTeam ? '기타 협업' : '전체 협업'} list={others} />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1">
+              {STATUS_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                    f.id === statusFilter ? 'bg-navy text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <select
+              className={`${inputClass} w-auto py-1.5`}
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+            >
+              <option value="all">전체 팀</option>
+              {teams.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+            <span className="ml-auto text-[11px] text-slate-400">{filtered.length}건</span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <Card>
+              <p className="py-10 text-center text-[13px] text-slate-400">조건에 맞는 협업이 없습니다.</p>
+            </Card>
+          ) : (
+            <>
+              <Section title="받은 요청" list={incoming} />
+              <Section title="보낸 요청" list={outgoing} />
+              <Section title={myTeam ? '기타 협업' : '전체 협업'} list={others} />
+            </>
+          )}
         </>
       )}
 

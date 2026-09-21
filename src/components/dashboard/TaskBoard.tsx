@@ -29,6 +29,13 @@ export type UserOpt = { id: string; name: string; team: string }
 const PRIO_TONE: Record<string, 'red' | 'yellow' | 'green'> = { high: 'red', mid: 'yellow', low: 'green' }
 const todayISO = () => new Date().toISOString().slice(0, 10)
 const isOverdue = (t: Task) => !!t.dueDate && t.dueDate < todayISO() && t.status !== 'done'
+// 마감 임박 우선: 마감일 있는 항목을 오름차순으로(=지연·임박이 위), 마감 없는 항목은 맨 뒤
+const byDue = (a: Task, b: Task) => {
+  if (!a.dueDate && !b.dueDate) return 0
+  if (!a.dueDate) return 1
+  if (!b.dueDate) return -1
+  return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0
+}
 
 const emptyForm = (team: string) => ({
   title: '',
@@ -136,7 +143,7 @@ export function TaskBoard({
 
       <div className="grid gap-3.5 md:grid-cols-3">
         {TASK_COLUMNS.map((col) => {
-          const list = shown.filter((t) => t.status === col)
+          const list = shown.filter((t) => t.status === col).sort(byDue)
           return (
             <div key={col} className="rounded-xl bg-slate-100/60 p-3">
               <div className="mb-2.5 flex items-center justify-between px-1">
