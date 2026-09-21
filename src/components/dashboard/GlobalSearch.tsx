@@ -81,7 +81,7 @@ export function GlobalSearch() {
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => q.trim() && setOpen(true)}
           onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-          placeholder="검색 (팀·KPI·결정·에스컬레이션·보고…)"
+          placeholder="검색 (팀·KPI·결정·결정 요청·보고…)"
           className="w-full bg-transparent text-[13px] text-white outline-none placeholder:text-white/60"
         />
         {loading && <Loader2 size={14} className="shrink-0 animate-spin text-white/70" />}

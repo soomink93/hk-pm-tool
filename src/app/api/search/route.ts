@@ -80,7 +80,7 @@ export async function GET(req: Request) {
   for (const e of escals)
     results.push({
       type: 'escalation',
-      typeLabel: '에스컬레이션',
+      typeLabel: '결정 요청',
       id: e.id,
       title: e.item,
       subtitle: `${e.dept} · 기한 ${e.deadline} · ${e.status}`,

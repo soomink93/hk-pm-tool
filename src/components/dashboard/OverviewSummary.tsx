@@ -50,14 +50,14 @@ export function OverviewSummary({
   const detailLink =
     detail?.kind === 'collab' ? '/collaboration' : detail?.kind === 'task' ? '/tasks' : '/escalation'
   const detailTitle =
-    detail?.kind === 'collab' ? '협업 상세' : detail?.kind === 'task' ? '작업 상세' : '에스컬레이션 상세'
+    detail?.kind === 'collab' ? '협업 상세' : detail?.kind === 'task' ? '작업 상세' : '결정 요청 상세'
 
   return (
     <section className="print-area overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5">
       <div className="flex items-center gap-2 border-b border-line bg-navy px-5 py-3 text-white">
         <ClipboardList size={17} />
         <h2 className="text-sm font-bold">이번 주 운영 요약</h2>
-        <span className="ml-auto hidden text-[11px] text-white/70 sm:inline print:hidden">협업 · 작업 · 에스컬레이션</span>
+        <span className="ml-auto hidden text-[11px] text-white/70 sm:inline print:hidden">협업 · 작업 · 결정 요청</span>
         <button
           onClick={() => window.print()}
           className="ml-2 inline-flex items-center gap-1 rounded-md bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/25 print:hidden"
@@ -73,7 +73,7 @@ export function OverviewSummary({
           {counts.tasksOverdue > 0 && (
             <> ({'지연 '}<b className="text-[#C00000]">{counts.tasksOverdue}</b>)</>
           )}{' '}
-          · 오픈 에스컬레이션 <b className="text-[#C00000]">{counts.escalOpen}</b>건
+          · 오픈 결정 요청 <b className="text-[#C00000]">{counts.escalOpen}</b>건
           {counts.escalUrgent > 0 && (
             <> ({'긴급 '}<b className="text-[#E36C09]">{counts.escalUrgent}</b>)</>
           )}
@@ -138,7 +138,7 @@ export function OverviewSummary({
           {/* 결정 대기 에스컬레이션 */}
           <div>
             <div className="mb-1.5 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-slate-500">
-              <AlertTriangle size={13} /> 결정 대기 에스컬레이션 ({pendingEscalations.length})
+              <AlertTriangle size={13} /> 결정 대기 요청 ({pendingEscalations.length})
             </div>
             {pendingEscalations.length === 0 ? (
               <p className="px-2 py-1.5 text-[13px] text-slate-400">대기 중인 항목이 없습니다.</p>

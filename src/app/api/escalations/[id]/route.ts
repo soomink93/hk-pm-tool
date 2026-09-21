@@ -29,9 +29,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       status: newStatus,
     },
   })
-  await logAudit(g.session, 'update', 'escalation', id, `에스컬레이션 수정: ${updated.item} (${newStatus})`)
+  await logAudit(g.session, 'update', 'escalation', id, `결정 요청 수정: ${updated.item} (${newStatus})`)
 
-  // 에스컬레이션 완료 → 결정 로그 자동 생성 + 링크 (중복 방지)
+  // 결정 요청 완료 → 결정 로그 자동 생성 + 링크 (중복 방지)
   if (becameDone) {
     const exists = await prisma.decision.findFirst({ where: { escalationId: id } })
     if (!exists) {
@@ -48,7 +48,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           escalationId: id,
         },
       })
-      await logAudit(g.session, 'create', 'decision', dec.id, `에스컬레이션 완료로 결정 자동 기록: ${updated.item}`)
+      await logAudit(g.session, 'create', 'decision', dec.id, `결정 요청 완료로 결정 자동 기록: ${updated.item}`)
     }
   }
   return NextResponse.json(updated)
@@ -63,6 +63,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const scope = await editableTeams(g.session)
   if (!canEditTeam(scope, esc.dept)) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
   await prisma.escalation.delete({ where: { id } })
-  await logAudit(g.session, 'delete', 'escalation', id, `에스컬레이션 삭제: ${esc.item}`)
+  await logAudit(g.session, 'delete', 'escalation', id, `결정 요청 삭제: ${esc.item}`)
   return NextResponse.json({ ok: true })
 }

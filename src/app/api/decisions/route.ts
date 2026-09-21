@@ -15,14 +15,17 @@ export async function POST(req: Request) {
   if (g.res) return g.res
   const { id: userId, name } = g.session.user
   const b = await req.json()
+  const CATEGORIES = ['예산', '인사', '계약', '전략', '운영', '기타']
+  const category = CATEGORIES.includes(b.category) ? String(b.category) : '기타'
   const decision = await prisma.decision.create({
     data: {
       date: String(b.date ?? ''),
       content: String(b.content ?? ''),
+      category,
       tier: String(b.tier ?? ''),
       decider: String(b.decider ?? ''),
       priority: String(b.priority ?? 'mid'),
-      status: String(b.status ?? '진행중'),
+      status: String(b.status ?? '완료'),
       createdById: userId,
       createdByName: name ?? '',
     },

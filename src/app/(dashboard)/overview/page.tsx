@@ -62,7 +62,7 @@ export default async function OverviewPage() {
   const trend = [
     { label: '신규 협업', now: nc7, prev: ncp },
     { label: '완료 작업', now: dt7, prev: dtp },
-    { label: '신규 에스컬레이션', now: ne7, prev: nep },
+    { label: '신규 결정 요청', now: ne7, prev: nep },
   ]
 
   // 에스컬레이션
@@ -111,7 +111,7 @@ export default async function OverviewPage() {
         <StatCard title="진행 중 협업" value={activeCollabs.length} sub="요청·수락·진행" valueClass="text-navy-light" />
         <StatCard title="미완료 작업" value={openTasks.length} sub="할 일 + 진행 중" />
         <StatCard title="지연 작업" value={overdueTasks.length} sub="마감 초과" valueClass="text-[#C00000]" />
-        <StatCard title="오픈 에스컬레이션" value={openEscal.length} sub="결정 대기" valueClass="text-[#C00000]" />
+        <StatCard title="오픈 결정 요청" value={openEscal.length} sub="결정 대기" valueClass="text-[#C00000]" />
       </div>
 
       <div className="grid gap-3.5 lg:grid-cols-2">
@@ -126,7 +126,7 @@ export default async function OverviewPage() {
       </div>
 
       <Card>
-        <h2 className="mb-4 text-base font-bold text-navy">오픈 에스컬레이션</h2>
+        <h2 className="mb-4 text-base font-bold text-navy">오픈 결정 요청</h2>
         {openEscal.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-[13px]">
@@ -160,7 +160,7 @@ export default async function OverviewPage() {
             </table>
           </div>
         ) : (
-          <p className="py-6 text-center text-[13px] text-slate-400">오픈 에스컬레이션 없음</p>
+          <p className="py-6 text-center text-[13px] text-slate-400">오픈 결정 요청 없음</p>
         )}
       </Card>
     </div>

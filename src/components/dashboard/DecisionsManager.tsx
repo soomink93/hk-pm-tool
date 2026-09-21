@@ -14,6 +14,7 @@ export type Decision = {
   id: string
   date: string
   content: string
+  category: string
   tier: string
   decider: string
   priority: string
@@ -22,8 +23,13 @@ export type Decision = {
   fromEscalation: boolean
 }
 
+export const DECISION_CATEGORIES = ['예산', '인사', '계약', '전략', '운영', '기타'] as const
+const CATEGORY_TONE: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'> = {
+  예산: 'green', 인사: 'blue', 계약: 'yellow', 전략: 'red', 운영: 'gray', 기타: 'gray',
+}
+
 const today = () => new Date().toISOString().slice(0, 10)
-const emptyForm = () => ({ date: today(), content: '', tier: '2단계', decider: '', priority: 'mid', status: '진행중' })
+const emptyForm = () => ({ date: today(), content: '', category: '기타', tier: '2단계', decider: '', priority: 'mid', status: '완료' })
 
 export function DecisionsManager({
   decisions,
@@ -42,6 +48,9 @@ export function DecisionsManager({
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<Record<string, string>>(emptyForm())
   const [busy, setBusy] = useState(false)
+  const [catFilter, setCatFilter] = useState('all')
+
+  const shown = catFilter === 'all' ? decisions : decisions.filter((d) => d.category === catFilter)
 
   function openAdd() {
     setEditId(null)
@@ -50,7 +59,7 @@ export function DecisionsManager({
   }
   function openEdit(d: Decision) {
     setEditId(d.id)
-    setForm({ date: d.date, content: d.content, tier: d.tier, decider: d.decider, priority: d.priority, status: d.status })
+    setForm({ date: d.date, content: d.content, category: d.category, tier: d.tier, decider: d.decider, priority: d.priority, status: d.status })
     setOpen(true)
   }
   async function save() {
@@ -84,14 +93,35 @@ export function DecisionsManager({
         )}
       </div>
 
+      <div className="flex flex-wrap items-center gap-1">
+        <button
+          onClick={() => setCatFilter('all')}
+          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${catFilter === 'all' ? 'bg-navy text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+        >
+          전체
+        </button>
+        {DECISION_CATEGORIES.map((c) => (
+          <button
+            key={c}
+            onClick={() => setCatFilter(c)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${catFilter === c ? 'bg-navy text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
       <Card>
-        {decisions.length === 0 ? (
-          <p className="py-8 text-center text-[13px] text-slate-400">등록된 결정이 없습니다.</p>
+        {shown.length === 0 ? (
+          <p className="py-8 text-center text-[13px] text-slate-400">
+            {decisions.length === 0 ? '등록된 결정이 없습니다.' : '해당 분류의 결정이 없습니다.'}
+          </p>
         ) : (
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b-2 border-line text-left text-[11px] uppercase tracking-wide text-slate-500">
                 <th className="py-2.5">날짜</th>
+                <th className="py-2.5">분류</th>
                 <th className="py-2.5">결정 내용</th>
                 <th className="py-2.5">단계</th>
                 <th className="py-2.5">결정자</th>
@@ -101,14 +131,15 @@ export function DecisionsManager({
               </tr>
             </thead>
             <tbody>
-              {decisions.map((d) => (
+              {shown.map((d) => (
                 <tr key={d.id} className="border-b border-slate-50 last:border-0">
                   <td className="py-2.5 text-xs text-slate-400">{d.date}</td>
+                  <td className="py-2.5"><Badge tone={CATEGORY_TONE[d.category] ?? 'gray'}>{d.category}</Badge></td>
                   <td className="py-2.5 font-semibold">
                     {d.content}
                     {d.fromEscalation && (
-                      <Link href="/escalation" className="ml-1.5 inline-flex align-middle" title="에스컬레이션에서 올라온 결정 — 원 항목 보기">
-                        <Badge tone="blue">↩ 에스컬레이션</Badge>
+                      <Link href="/escalation" className="ml-1.5 inline-flex align-middle" title="결정 요청에서 올라온 결정 — 원 항목 보기">
+                        <Badge tone="blue">↩ 결정 요청</Badge>
                       </Link>
                     )}
                   </td>
@@ -146,6 +177,13 @@ export function DecisionsManager({
         <Field label="결정 내용">
           <textarea className={`${inputClass} min-h-20`} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
         </Field>
+        <Field label="분류">
+          <select className={inputClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            {DECISION_CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </Field>
         <Field label="단계">
           <select className={inputClass} value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
             <option>1단계</option><option>2단계</option><option>3단계</option>
@@ -161,7 +199,7 @@ export function DecisionsManager({
         </Field>
         <Field label="상태">
           <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-            <option>완료</option><option>진행중</option><option>보류</option>
+            <option>완료</option><option>보류</option>
           </select>
         </Field>
         <div className="mt-5 flex justify-end gap-2">

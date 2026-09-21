@@ -79,7 +79,7 @@ export function TeamsBriefView({
               <th className="py-2.5">제출</th>
               <th className="py-2.5">상태</th>
               <th className="py-2.5">리스크</th>
-              <th className="py-2.5">에스컬레이션</th>
+              <th className="py-2.5">결정 요청</th>
               {canAny && <th className="py-2.5" />}
             </tr>
           </thead>
@@ -122,7 +122,7 @@ export function TeamsBriefView({
         <Field label="주요 리스크">
           <input className={inputClass} value={form.risk} onChange={(e) => setForm({ ...form, risk: e.target.value })} />
         </Field>
-        <Field label="에스컬레이션">
+        <Field label="결정 요청">
           <input className={inputClass} value={form.escalation} onChange={(e) => setForm({ ...form, escalation: e.target.value })} />
         </Field>
         <div className="mt-5 flex justify-end gap-2">

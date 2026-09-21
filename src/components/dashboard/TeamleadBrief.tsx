@@ -86,7 +86,7 @@ export function TeamleadBrief({
         <Field label="지연 / 리스크">
           <input className={inputClass} value={form.risk} onChange={(e) => setForm({ ...form, risk: e.target.value })} placeholder="없으면 '없음'" />
         </Field>
-        <Field label="에스컬레이션 사항">
+        <Field label="결정 요청 사항">
           <input className={inputClass} value={form.escalation} onChange={(e) => setForm({ ...form, escalation: e.target.value })} placeholder="없으면 '없음'" />
         </Field>
         <Field label="전체 상태">

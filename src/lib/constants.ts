@@ -58,8 +58,8 @@ export const TABS = [
   { id: 'collaboration', label: '협업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'tasks', label: '작업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'kpi', label: 'KPI', roles: ['admin'] },
+  { id: 'escalation', label: '결정 요청', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'president', 'executive'] },
-  { id: 'escalation', label: '에스컬레이션', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'audit', label: '변경 이력', roles: ['admin'] },
   { id: 'settings', label: '설정', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
 ] as const

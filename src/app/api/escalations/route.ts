@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const b = await req.json()
   const dept = String(b.dept ?? '')
   const scope = await editableTeams(g.session)
-  if (!canEditTeam(scope, dept)) return NextResponse.json({ error: '해당 팀의 에스컬레이션을 등록할 권한이 없습니다.' }, { status: 403 })
+  if (!canEditTeam(scope, dept)) return NextResponse.json({ error: '해당 팀의 결정 요청을 등록할 권한이 없습니다.' }, { status: 403 })
   const escalation = await prisma.escalation.create({
     data: {
       item: String(b.item ?? ''),
@@ -28,6 +28,6 @@ export async function POST(req: Request) {
       status: String(b.status ?? '대기중'),
     },
   })
-  await logAudit(g.session, 'create', 'escalation', escalation.id, `에스컬레이션 등록: ${escalation.item}`)
+  await logAudit(g.session, 'create', 'escalation', escalation.id, `결정 요청 등록: ${escalation.item}`)
   return NextResponse.json(escalation, { status: 201 })
 }

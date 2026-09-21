@@ -19,6 +19,7 @@ export default async function DecisionsPage() {
         id: d.id,
         date: d.date,
         content: d.content,
+        category: d.category,
         tier: d.tier,
         decider: d.decider,
         priority: d.priority,

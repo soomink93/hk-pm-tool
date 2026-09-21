@@ -84,7 +84,7 @@ export function EscalationManager({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-base font-bold text-navy">에스컬레이션 트래커</h1>
+        <h1 className="text-base font-bold text-navy">결정 요청</h1>
         {canAny && (
           <Button onClick={openAdd}>
             <Plus size={14} /> 항목 추가
@@ -170,7 +170,7 @@ export function EscalationManager({
         )}
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editId ? '에스컬레이션 수정' : '에스컬레이션 추가'}>
+      <Modal open={open} onClose={() => setOpen(false)} title={editId ? '결정 요청 수정' : '결정 요청 추가'}>
         <Field label="항목명">
           <input className={inputClass} value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })} />
         </Field>

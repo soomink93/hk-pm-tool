@@ -22,15 +22,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!ok) return NextResponse.json({ error: '본인이 작성한 결정만 수정할 수 있습니다.' }, { status: 403 })
 
   const b = await req.json()
+  const CATEGORIES = ['예산', '인사', '계약', '전략', '운영', '기타']
+  const category = CATEGORIES.includes(b.category) ? String(b.category) : '기타'
   const updated = await prisma.decision.update({
     where: { id },
     data: {
       date: String(b.date ?? ''),
       content: String(b.content ?? ''),
+      category,
       tier: String(b.tier ?? ''),
       decider: String(b.decider ?? ''),
       priority: String(b.priority ?? 'mid'),
-      status: String(b.status ?? '진행중'),
+      status: String(b.status ?? '완료'),
     },
   })
   await logAudit(g.session, 'update', 'decision', id, `결정 수정: ${updated.content}`)
