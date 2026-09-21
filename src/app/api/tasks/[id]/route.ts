@@ -1,11 +1,33 @@
 import { NextResponse } from 'next/server'
 import type { Prisma, TaskStatus } from '@prisma/client'
+import type { Session } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
 import { logAudit } from '@/lib/audit'
+import { createCollabNotifications } from '@/lib/notify'
+import { COLLAB_STATE_LABEL } from '@/lib/constants'
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done']
+
+// 연결된 협업 자동 완료: 협업의 모든 작업이 완료되면 협업도 완료 처리
+async function syncCollabOnTaskDone(collaborationId: string | null, session: Session) {
+  if (!collaborationId) return
+  const collab = await prisma.collaboration.findUnique({ where: { id: collaborationId } })
+  if (!collab || collab.status === 'done' || collab.status === 'declined') return
+  const remaining = await prisma.task.count({ where: { collaborationId, status: { not: 'done' } } })
+  if (remaining > 0) return
+  await prisma.collaboration.update({ where: { id: collaborationId }, data: { status: 'done' } })
+  await createCollabNotifications({
+    teams: [collab.fromTeam, collab.toTeam],
+    fromTeam: collab.fromTeam,
+    toTeam: collab.toTeam,
+    content: `[${COLLAB_STATE_LABEL.done}] ${collab.content} (작업 완료)`,
+    kind: 'status',
+    actorId: session.user.id,
+  })
+  await logAudit(session, 'status', 'collaboration', collaborationId, `협업 자동 완료(작업 완료): ${collab.fromTeam}→${collab.toTeam} ${collab.content}`)
+}
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard()
@@ -27,6 +49,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: '상태만 변경할 수 있습니다.' }, { status: 403 })
     const updated = await prisma.task.update({ where: { id }, data: { status: b.status as TaskStatus } })
     await logAudit(g.session, 'status', 'task', id, `내 작업 상태변경: ${updated.title} (${updated.status})`)
+    if (updated.status === 'done') await syncCollabOnTaskDone(updated.collaborationId, g.session)
     return NextResponse.json(updated)
   }
 
@@ -60,6 +83,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const updated = await prisma.task.update({ where: { id }, data })
   await logAudit(g.session, 'update', 'task', id, `작업 수정: ${updated.title} (${updated.status})`)
+  if (updated.status === 'done' && task.status !== 'done') await syncCollabOnTaskDone(updated.collaborationId, g.session)
   return NextResponse.json(updated)
 }
 

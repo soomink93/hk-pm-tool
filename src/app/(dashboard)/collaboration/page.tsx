@@ -12,7 +12,7 @@ export default async function CollaborationPage() {
   const where =
     role === 'teamlead' ? { OR: [{ fromTeam: team ?? '' }, { toTeam: team ?? '' }] } : {}
 
-  const [items, teamRows] = await Promise.all([
+  const [items, teamRows, userRows] = await Promise.all([
     prisma.collaboration.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
@@ -22,6 +22,7 @@ export default async function CollaborationPage() {
       },
     }),
     prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
+    prisma.user.findMany({ orderBy: [{ team: 'asc' }, { name: 'asc' }], select: { id: true, name: true, team: true } }),
   ])
 
   return (
@@ -45,6 +46,7 @@ export default async function CollaborationPage() {
       }))}
       myTeam={team ?? ''}
       teams={teamRows.map((t) => t.name)}
+      users={userRows.map((u) => ({ id: u.id, name: u.name, team: u.team ?? '' }))}
       editableTeams={scopeToArray(await editableTeams(session!))}
     />
   )

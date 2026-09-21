@@ -12,6 +12,7 @@ import { COLLAB_STATE_LABEL, COLLAB_STATE_TONE, TASK_STATUS_LABEL } from '@/lib/
 
 export type Comment = { id: string; authorName: string; body: string; createdAt: string }
 export type LinkedTask = { id: string; title: string; status: string }
+export type UserOpt = { id: string; name: string; team: string }
 export type Collab = {
   id: string
   fromTeam: string
@@ -30,32 +31,41 @@ const fmt = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 
 function CollabCard({
   c,
   editableTeams,
+  users,
   onChanged,
 }: {
   c: Collab
   editableTeams: 'all' | string[]
+  users: UserOpt[]
   onChanged: () => void
 }) {
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
   const [showComments, setShowComments] = useState(false)
+  const [acceptOpen, setAcceptOpen] = useState(false)
+  const [acceptForm, setAcceptForm] = useState({ assigneeId: '', dueDate: '' })
 
   const canT = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
   const involved = canT(c.fromTeam) || canT(c.toTeam)
   const canRespond = canT(c.toTeam)
   const isRequester = canT(c.fromTeam)
   const terminal = c.status === 'done' || c.status === 'declined'
+  const toTeamMembers = users.filter((u) => u.team === c.toTeam)
 
-  async function setStatus(status: string) {
+  async function setStatus(status: string, extra?: Record<string, string>) {
     setBusy(true)
     const res = await fetch(`/api/collaborations/${c.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, ...extra }),
     })
     setBusy(false)
     if (res.ok) onChanged()
     else alert('변경에 실패했습니다.')
+  }
+  async function confirmAccept() {
+    setAcceptOpen(false)
+    await setStatus('accepted', acceptForm)
   }
   async function cancel() {
     if (!confirm('이 협업 요청을 취소(삭제)하시겠습니까?')) return
@@ -96,7 +106,7 @@ function CollabCard({
         <div className="mt-3 flex flex-wrap gap-2">
           {c.status === 'requested' && canRespond && (
             <>
-              <Button onClick={() => setStatus('accepted')} disabled={busy}>수락</Button>
+              <Button onClick={() => { setAcceptForm({ assigneeId: '', dueDate: '' }); setAcceptOpen(true) }} disabled={busy}>수락</Button>
               <Button variant="ghost" onClick={() => setStatus('declined')} disabled={busy}>거절</Button>
             </>
           )}
@@ -161,6 +171,27 @@ function CollabCard({
           </div>
         )}
       </div>
+
+      <Modal open={acceptOpen} onClose={() => setAcceptOpen(false)} title="협업 수락 · 작업 배정">
+        <p className="mb-3 text-[13px] text-slate-500">
+          수락하면 <b className="text-navy">{c.toTeam}</b> 작업 보드에 작업이 생성됩니다. 담당자와 마감일을 지정하세요.
+        </p>
+        <Field label="담당자">
+          <select className={inputClass} value={acceptForm.assigneeId} onChange={(e) => setAcceptForm({ ...acceptForm, assigneeId: e.target.value })}>
+            <option value="">미지정 (나중에)</option>
+            {toTeamMembers.map((u) => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="마감일 (선택)">
+          <input type="date" className={inputClass} value={acceptForm.dueDate} onChange={(e) => setAcceptForm({ ...acceptForm, dueDate: e.target.value })} />
+        </Field>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setAcceptOpen(false)}>취소</Button>
+          <Button onClick={confirmAccept} disabled={busy}>수락하고 작업 생성</Button>
+        </div>
+      </Modal>
     </Card>
   )
 }
@@ -169,11 +200,13 @@ export function CollaborationManager({
   items,
   myTeam,
   teams,
+  users,
   editableTeams,
 }: {
   items: Collab[]
   myTeam: string
   teams: string[]
+  users: UserOpt[]
   editableTeams: 'all' | string[]
 }) {
   const router = useRouter()
@@ -231,7 +264,7 @@ export function CollaborationManager({
         <h2 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-slate-500">{title} ({list.length})</h2>
         <div className="space-y-3">
           {list.map((c) => (
-            <CollabCard key={c.id} c={c} editableTeams={editableTeams} onChanged={refresh} />
+            <CollabCard key={c.id} c={c} editableTeams={editableTeams} users={users} onChanged={refresh} />
           ))}
         </div>
       </div>

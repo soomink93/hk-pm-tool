@@ -35,11 +35,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (status === 'accepted') {
     const exists = await prisma.task.findFirst({ where: { collaborationId: id } })
     if (!exists) {
+      // 담당자(assigneeId) 지정 시: 대상 팀 소속이면 이름 파생 + 링크
+      let assignee = ''
+      let assigneeId: string | null = null
+      if (b.assigneeId) {
+        const u = await prisma.user.findUnique({
+          where: { id: String(b.assigneeId) },
+          select: { id: true, name: true, team: true },
+        })
+        if (u && u.team === collab.toTeam) {
+          assignee = u.name
+          assigneeId = u.id
+        }
+      }
       await prisma.task.create({
         data: {
           title: collab.content,
           description: `${collab.fromTeam} 협업 요청`,
           team: collab.toTeam,
+          assignee,
+          assigneeId,
+          dueDate: b.dueDate ? String(b.dueDate) : '',
           status: 'todo',
           priority: 'mid',
           collaborationId: id,
