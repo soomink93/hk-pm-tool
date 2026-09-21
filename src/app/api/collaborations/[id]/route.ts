@@ -29,7 +29,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if ((status === 'accepted' || status === 'declined') && !full && !canEditTeam(scope, collab.toTeam))
     return NextResponse.json({ error: '요청을 받은 팀만 수락/거절할 수 있습니다.' }, { status: 403 })
 
+  // 거절 시 사유 필수
+  const reason = String(b.reason ?? '').trim()
+  if (status === 'declined' && !reason)
+    return NextResponse.json({ error: '거절 사유를 입력하세요.' }, { status: 400 })
+
   const updated = await prisma.collaboration.update({ where: { id }, data: { status } })
+
+  // 거절 사유를 댓글로 기록(요청 팀이 맥락 확인)
+  if (status === 'declined' && reason) {
+    await prisma.collaborationComment.create({
+      data: { collaborationId: id, authorId: userId, authorName: name ?? '', body: `거절 사유: ${reason}` },
+    })
+  }
 
   // 수락 시 대상 팀 작업 보드에 작업 자동 생성 (중복 방지)
   if (status === 'accepted') {

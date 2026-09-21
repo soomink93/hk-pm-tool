@@ -7,6 +7,7 @@ import { CalendarClock, Handshake, CheckCircle2, Circle, Loader2 } from 'lucide-
 import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { TASK_STATUS_LABEL, TASK_COLUMNS, PRIO_LABEL } from '@/lib/constants'
+import { TaskComments, type TaskComment } from './TaskComments'
 
 export type MyTask = {
   id: string
@@ -17,6 +18,7 @@ export type MyTask = {
   priority: string
   dueDate: string
   collabFrom?: string | null
+  comments: TaskComment[]
 }
 
 const PRIO_TONE: Record<string, 'red' | 'yellow' | 'green'> = { high: 'red', mid: 'yellow', low: 'green' }
@@ -88,7 +90,8 @@ export function MyTasks({ tasks }: { tasks: MyTask[] }) {
                 {list.map((t) => {
                   const od = isOverdue(t)
                   return (
-                    <div key={t.id} className="flex items-start gap-3 rounded-lg border border-line px-3 py-2.5">
+                    <div key={t.id} className="rounded-lg border border-line px-3 py-2.5">
+                      <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className={`text-[13px] font-semibold ${t.status === 'done' ? 'text-slate-400 line-through' : 'text-navy'}`}>{t.title}</span>
@@ -119,6 +122,8 @@ export function MyTasks({ tasks }: { tasks: MyTask[] }) {
                           <option key={s} value={s}>{TASK_STATUS_LABEL[s]}</option>
                         ))}
                       </select>
+                      </div>
+                      <TaskComments taskId={t.id} comments={t.comments} canComment />
                     </div>
                   )
                 })}

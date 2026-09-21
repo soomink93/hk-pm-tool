@@ -129,6 +129,7 @@ model Task {
   createdByName String
   collaborationId String?
   collaboration   Collaboration? @relation(fields: [collaborationId], references: [id], onDelete: SetNull)
+  comments      TaskComment[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -143,6 +144,8 @@ model Collaboration {
   toTeam        String
   content       String
   status        CollabStatus @default(requested)
+  priority      String       @default("mid")
+  dueDate       String       @default("")
   createdById   String
   createdByName String
   createdAt     DateTime     @default(now())
@@ -178,6 +181,18 @@ model CollaborationComment {
   createdAt       DateTime      @default(now())
 
   @@index([collaborationId])
+}
+
+model TaskComment {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId   String
+  authorName String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([taskId])
 }
 
 model Brief {

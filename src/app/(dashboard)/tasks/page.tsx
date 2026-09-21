@@ -14,7 +14,10 @@ export default async function TasksPage() {
     prisma.task.findMany({
       where,
       orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
-      include: { collaboration: { select: { fromTeam: true } } },
+      include: {
+        collaboration: { select: { fromTeam: true } },
+        comments: { orderBy: { createdAt: 'asc' } },
+      },
     }),
     prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
     prisma.user.findMany({ orderBy: [{ team: 'asc' }, { name: 'asc' }], select: { id: true, name: true, team: true } }),
@@ -34,11 +37,13 @@ export default async function TasksPage() {
         dueDate: t.dueDate,
         createdByName: t.createdByName,
         collabFrom: t.collaboration?.fromTeam ?? null,
+        comments: t.comments.map((m) => ({ id: m.id, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
       }))}
       myTeam={team ?? ''}
       teams={teamRows.map((t) => t.name)}
       users={userRows.map((u) => ({ id: u.id, name: u.name, team: u.team ?? '' }))}
       role={role}
+      currentUserId={session!.user.id}
       editableTeams={scopeToArray(await editableTeams(session!))}
     />
   )

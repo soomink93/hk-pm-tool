@@ -19,6 +19,8 @@ export type Collab = {
   toTeam: string
   content: string
   status: string
+  priority: string
+  dueDate: string
   createdByName: string
   createdAt: string
   updatedAt: string
@@ -27,6 +29,8 @@ export type Collab = {
 }
 
 const fmt = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })
+const PRIO_TONE: Record<string, 'red' | 'yellow' | 'green'> = { high: 'red', mid: 'yellow', low: 'green' }
+const PRIO_LABEL: Record<string, string> = { high: '높음', mid: '중간', low: '낮음' }
 
 function CollabCard({
   c,
@@ -44,6 +48,8 @@ function CollabCard({
   const [showComments, setShowComments] = useState(false)
   const [acceptOpen, setAcceptOpen] = useState(false)
   const [acceptForm, setAcceptForm] = useState({ assigneeId: '', dueDate: '' })
+  const [declineOpen, setDeclineOpen] = useState(false)
+  const [declineReason, setDeclineReason] = useState('')
 
   const canT = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
   const involved = canT(c.fromTeam) || canT(c.toTeam)
@@ -66,6 +72,12 @@ function CollabCard({
   async function confirmAccept() {
     setAcceptOpen(false)
     await setStatus('accepted', acceptForm)
+  }
+  async function confirmDecline() {
+    if (!declineReason.trim()) return
+    setDeclineOpen(false)
+    await setStatus('declined', { reason: declineReason })
+    setDeclineReason('')
   }
   async function cancel() {
     if (!confirm('이 협업 요청을 취소(삭제)하시겠습니까?')) return
@@ -96,6 +108,8 @@ function CollabCard({
           {c.fromTeam} <ArrowRight size={13} className="text-slate-400" /> {c.toTeam}
         </span>
         <Badge tone={COLLAB_STATE_TONE[c.status] ?? 'gray'}>{COLLAB_STATE_LABEL[c.status] ?? c.status}</Badge>
+        <Badge tone={PRIO_TONE[c.priority] ?? 'gray'}>{PRIO_LABEL[c.priority] ?? c.priority}</Badge>
+        {c.dueDate && <span className="text-[11px] font-semibold text-slate-500">희망 {c.dueDate}</span>}
         <span className="ml-auto text-[11px] text-slate-400">요청 {c.createdByName} · {fmt(c.createdAt)}</span>
       </div>
 
@@ -106,8 +120,8 @@ function CollabCard({
         <div className="mt-3 flex flex-wrap gap-2">
           {c.status === 'requested' && canRespond && (
             <>
-              <Button onClick={() => { setAcceptForm({ assigneeId: '', dueDate: '' }); setAcceptOpen(true) }} disabled={busy}>수락</Button>
-              <Button variant="ghost" onClick={() => setStatus('declined')} disabled={busy}>거절</Button>
+              <Button onClick={() => { setAcceptForm({ assigneeId: '', dueDate: c.dueDate ?? '' }); setAcceptOpen(true) }} disabled={busy}>수락</Button>
+              <Button variant="ghost" onClick={() => { setDeclineReason(''); setDeclineOpen(true) }} disabled={busy}>거절</Button>
             </>
           )}
           {c.status === 'accepted' && <Button onClick={() => setStatus('in_progress')} disabled={busy}>진행 시작</Button>}
@@ -192,6 +206,24 @@ function CollabCard({
           <Button onClick={confirmAccept} disabled={busy}>수락하고 작업 생성</Button>
         </div>
       </Modal>
+
+      <Modal open={declineOpen} onClose={() => setDeclineOpen(false)} title="협업 거절">
+        <p className="mb-3 text-[13px] text-slate-500">
+          거절 사유를 남기면 <b className="text-navy">{c.fromTeam}</b>이(가) 확인하고 다시 조율할 수 있습니다.
+        </p>
+        <Field label="거절 사유 (필수)">
+          <textarea
+            className={`${inputClass} min-h-20`}
+            value={declineReason}
+            onChange={(e) => setDeclineReason(e.target.value)}
+            placeholder="예: 이번 주 마감이 겹쳐 다음 주부터 가능합니다."
+          />
+        </Field>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setDeclineOpen(false)}>취소</Button>
+          <Button onClick={confirmDecline} disabled={busy || !declineReason.trim()}>거절 처리</Button>
+        </div>
+      </Modal>
     </Card>
   )
 }
@@ -213,7 +245,7 @@ export function CollaborationManager({
   const refresh = () => router.refresh()
 
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ toTeam: '', content: '' })
+  const [form, setForm] = useState({ toTeam: '', content: '', priority: 'mid', dueDate: '' })
   const [busy, setBusy] = useState(false)
   const [statusFilter, setStatusFilter] = useState('active')
   const [teamFilter, setTeamFilter] = useState('all')
@@ -237,7 +269,7 @@ export function CollaborationManager({
   const others = filtered.filter((c) => c.toTeam !== myTeam && c.fromTeam !== myTeam)
 
   function openNew() {
-    setForm({ toTeam: otherTeams[0] ?? '', content: '' })
+    setForm({ toTeam: otherTeams[0] ?? '', content: '', priority: 'mid', dueDate: '' })
     setOpen(true)
   }
   async function create() {
@@ -344,6 +376,18 @@ export function CollaborationManager({
             placeholder="예: 신제품 공동 마케팅 자료 제작 협조 요청"
           />
         </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="우선순위">
+            <select className={inputClass} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+              <option value="high">높음</option>
+              <option value="mid">중간</option>
+              <option value="low">낮음</option>
+            </select>
+          </Field>
+          <Field label="희망 완료일 (선택)">
+            <input type="date" className={inputClass} value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+          </Field>
+        </div>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)}>취소</Button>
           <Button onClick={create} disabled={busy}>{busy ? '요청 중…' : '요청 보내기'}</Button>

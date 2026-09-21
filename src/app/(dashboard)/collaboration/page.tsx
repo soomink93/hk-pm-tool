@@ -33,6 +33,8 @@ export default async function CollaborationPage() {
         toTeam: c.toTeam,
         content: c.content,
         status: c.status,
+        priority: c.priority,
+        dueDate: c.dueDate,
         createdByName: c.createdByName,
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString(),

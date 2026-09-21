@@ -11,7 +11,10 @@ export default async function MyTasksPage() {
   const tasks = await prisma.task.findMany({
     where: { assigneeId: userId },
     orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
-    include: { collaboration: { select: { fromTeam: true } } },
+    include: {
+      collaboration: { select: { fromTeam: true } },
+      comments: { orderBy: { createdAt: 'asc' } },
+    },
   })
 
   return (
@@ -25,6 +28,7 @@ export default async function MyTasksPage() {
         priority: t.priority,
         dueDate: t.dueDate,
         collabFrom: t.collaboration?.fromTeam ?? null,
+        comments: t.comments.map((m) => ({ id: m.id, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
       }))}
     />
   )

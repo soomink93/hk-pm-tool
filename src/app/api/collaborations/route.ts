@@ -37,8 +37,11 @@ export async function POST(req: Request) {
   if (!toTeam || !content) return NextResponse.json({ error: '대상 팀과 내용을 입력하세요.' }, { status: 400 })
   if (toTeam === team) return NextResponse.json({ error: '본인 팀에는 요청할 수 없습니다.' }, { status: 400 })
 
+  const priority = ['high', 'mid', 'low'].includes(b.priority) ? String(b.priority) : 'mid'
+  const dueDate = b.dueDate ? String(b.dueDate) : ''
+
   const collab = await prisma.collaboration.create({
-    data: { fromTeam: team, toTeam, content, createdById: userId, createdByName: name ?? '', status: 'requested' },
+    data: { fromTeam: team, toTeam, content, priority, dueDate, createdById: userId, createdByName: name ?? '', status: 'requested' },
   })
   await createCollabNotifications({
     teams: [toTeam],

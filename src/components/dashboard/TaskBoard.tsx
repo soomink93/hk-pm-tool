@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { TASK_STATUS_LABEL, TASK_COLUMNS, PRIO_LABEL } from '@/lib/constants'
+import { TaskComments, type TaskComment } from './TaskComments'
 
 export type Task = {
   id: string
@@ -22,6 +23,7 @@ export type Task = {
   dueDate: string
   createdByName: string
   collabFrom?: string | null
+  comments: TaskComment[]
 }
 
 export type UserOpt = { id: string; name: string; team: string }
@@ -53,6 +55,7 @@ export function TaskBoard({
   teams,
   users,
   role,
+  currentUserId,
   editableTeams,
 }: {
   tasks: Task[]
@@ -60,6 +63,7 @@ export function TaskBoard({
   teams: string[]
   users: UserOpt[]
   role: string
+  currentUserId: string
   editableTeams: 'all' | string[]
 }) {
   const router = useRouter()
@@ -196,6 +200,7 @@ export function TaskBoard({
                           </button>
                         </div>
                       )}
+                      <TaskComments taskId={t.id} comments={t.comments} canComment={canEditT(t.team) || t.assigneeId === currentUserId} />
                     </Card>
                   )
                 })}
