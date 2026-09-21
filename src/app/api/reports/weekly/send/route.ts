@@ -4,9 +4,12 @@ import { prisma } from '@/lib/prisma'
 import { buildWeeklyDigest, renderDigestHtml } from '@/lib/digest'
 import { sendMail, mailConfigured } from '@/lib/mailer'
 
+// [임시] 테스트 중 — 관리자에게만 발송. 검증 후 아래 roles를 ['chairman','president','admin']로 되돌릴 것.
+const RECIPIENT_ROLES: ('chairman' | 'president' | 'admin')[] = ['admin']
+
 async function recipients(): Promise<string[]> {
   const users = await prisma.user.findMany({
-    where: { role: { in: ['chairman', 'president', 'admin'] } },
+    where: { role: { in: RECIPIENT_ROLES } },
     select: { email: true },
   })
   return users.map((u) => u.email).filter((e) => /@/.test(e))
