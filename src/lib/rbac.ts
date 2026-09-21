@@ -24,5 +24,23 @@ const MATRIX: Record<Action, Role[]> = {
 export const can = (role: Role, action: Action): boolean =>
   isFullEditor(role) || MATRIX[action].includes(role)
 
+// 결정 단계(tier) ↔ 결정권자 레벨. 상위 역할은 하위 단계를 항상 처리 가능.
+export const ROLE_RANK: Record<Role, number> = {
+  teamlead: 1,
+  executive: 2,
+  president: 3,
+  chairman: 3,
+  admin: 99,
+}
+export const TIER_RANK: Record<string, number> = { '1단계': 1, '2단계': 2, '3단계': 3 }
+export const TIER_DECIDER_LABEL: Record<string, string> = {
+  '1단계': '팀장급',
+  '2단계': '임원급',
+  '3단계': '회장·사장',
+}
+// 해당 단계를 '완료(결정)' 처리할 권한이 있는가
+export const canDecideTier = (role: Role, tier: string): boolean =>
+  (ROLE_RANK[role] ?? 0) >= (TIER_RANK[tier] ?? 99)
+
 export const visibleTabs = (role: Role): string[] =>
   TABS.filter((t) => (t.roles as readonly string[]).includes(role)).map((t) => t.id)

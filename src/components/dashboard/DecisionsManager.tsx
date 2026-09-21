@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { PRIO_LABEL, PRIO_CLASS } from '@/lib/constants'
+import { TIER_DECIDER_LABEL } from '@/lib/rbac'
 
 export type Decision = {
   id: string
@@ -184,10 +185,13 @@ export function DecisionsManager({
             ))}
           </select>
         </Field>
-        <Field label="단계">
+        <Field label="단계 (결정권자)">
           <select className={inputClass} value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
             <option>1단계</option><option>2단계</option><option>3단계</option>
           </select>
+          <p className="mt-1 text-[11px] text-slate-400">
+            {form.tier} → <b className="text-slate-500">{TIER_DECIDER_LABEL[form.tier] ?? '상위 결정권자'}</b>
+          </p>
         </Field>
         <Field label="결정자">
           <input className={inputClass} value={form.decider} onChange={(e) => setForm({ ...form, decider: e.target.value })} />

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { isUrgent } from '@/lib/helpers'
+import { canDecideTier, TIER_DECIDER_LABEL, type Role } from '@/lib/rbac'
 
 export type EscDecision = { content: string; decider: string; date: string }
 export type Escalation = {
@@ -31,14 +32,17 @@ function statusTone(s: string): 'green' | 'yellow' | 'red' {
 export function EscalationManager({
   escalations,
   teams,
+  role,
   editableTeams,
 }: {
   escalations: Escalation[]
   teams: string[]
+  role: string
   editableTeams: 'all' | string[]
 }) {
   const router = useRouter()
   const canEdit = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
+  const canCompleteTier = (tier: string) => canDecideTier(role as Role, tier)
   const myTeams = editableTeams === 'all' ? teams : teams.filter((t) => editableTeams.includes(t))
   const canAny = myTeams.length > 0
 
@@ -174,10 +178,13 @@ export function EscalationManager({
         <Field label="항목명">
           <input className={inputClass} value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })} />
         </Field>
-        <Field label="단계">
+        <Field label="단계 (결정권자)">
           <select className={inputClass} value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
-            <option>2단계</option><option>3단계</option>
+            <option>1단계</option><option>2단계</option><option>3단계</option>
           </select>
+          <p className="mt-1 text-[11px] text-slate-400">
+            {form.tier} → <b className="text-slate-500">{TIER_DECIDER_LABEL[form.tier] ?? '상위 결정권자'}</b>가 결정
+          </p>
         </Field>
         <Field label="요청 부서">
           <select className={inputClass} value={form.dept} onChange={(e) => setForm({ ...form, dept: e.target.value })}>
@@ -194,11 +201,18 @@ export function EscalationManager({
         </Field>
         <Field label="상태">
           <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-            <option>대기중</option><option>검토중</option><option>완료</option>
+            <option>대기중</option><option>검토중</option>
+            <option value="완료" disabled={!canCompleteTier(form.tier)}>완료</option>
           </select>
-          <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
-            <CheckSquare size={11} /> '완료'로 변경하면 결정 로그가 자동 기록되고 이 항목과 연결됩니다.
-          </p>
+          {canCompleteTier(form.tier) ? (
+            <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
+              <CheckSquare size={11} /> '완료'로 변경하면 결정 로그가 자동 기록되고 이 항목과 연결됩니다.
+            </p>
+          ) : (
+            <p className="mt-1 flex items-center gap-1 text-[11px] text-[#C00000]">
+              <CheckSquare size={11} /> {form.tier}는 {TIER_DECIDER_LABEL[form.tier] ?? '상위 결정권자'}만 완료(결정)할 수 있습니다.
+            </p>
+          )}
         </Field>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)}>취소</Button>

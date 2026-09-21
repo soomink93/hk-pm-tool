@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
+import { canDecideTier, TIER_DECIDER_LABEL, type Role } from '@/lib/rbac'
 import { logAudit } from '@/lib/audit'
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +18,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
 
   const newStatus = String(b.status ?? '대기중')
+  const newTier = String(b.tier ?? esc.tier)
   const becameDone = newStatus === '완료' && esc.status !== '완료'
+
+  // 단계별 결정권자 강제: 완료(결정)는 해당 단계 권한자(또는 상위)만
+  if (becameDone && !canDecideTier(g.session.user.role as Role, newTier)) {
+    return NextResponse.json(
+      { error: `${newTier}는 ${TIER_DECIDER_LABEL[newTier] ?? '상위 결정권자'}만 완료(결정)할 수 있습니다.` },
+      { status: 403 },
+    )
+  }
+
   const updated = await prisma.escalation.update({
     where: { id },
     data: {

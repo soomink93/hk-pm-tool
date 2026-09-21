@@ -31,6 +31,7 @@ export default async function EscalationPage() {
           : null,
       }))}
       teams={teams.map((t) => t.name)}
+      role={session!.user.role}
       editableTeams={scopeToArray(await editableTeams(session!))}
     />
   )
