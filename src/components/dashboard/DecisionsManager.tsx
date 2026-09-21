@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Plus, Pencil, X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -105,7 +106,11 @@ export function DecisionsManager({
                   <td className="py-2.5 text-xs text-slate-400">{d.date}</td>
                   <td className="py-2.5 font-semibold">
                     {d.content}
-                    {d.fromEscalation && <Badge tone="blue">에스컬레이션</Badge>}
+                    {d.fromEscalation && (
+                      <Link href="/escalation" className="ml-1.5 inline-flex align-middle" title="에스컬레이션에서 올라온 결정 — 원 항목 보기">
+                        <Badge tone="blue">↩ 에스컬레이션</Badge>
+                      </Link>
+                    )}
                   </td>
                   <td className="py-2.5"><Badge tone="blue">{d.tier}</Badge></td>
                   <td className="py-2.5">{d.decider}</td>

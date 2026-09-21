@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, X } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Pencil, X, CheckSquare, CornerDownRight } from 'lucide-react'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { isUrgent } from '@/lib/helpers'
 
+export type EscDecision = { content: string; decider: string; date: string }
 export type Escalation = {
   id: string
   item: string
@@ -17,6 +19,7 @@ export type Escalation = {
   needed: string
   deadline: string
   status: string
+  decision: EscDecision | null
 }
 
 const emptyForm = (dept: string) => ({ item: '', tier: '3단계', dept, needed: '', deadline: '', status: '대기중' })
@@ -114,8 +117,9 @@ export function EscalationManager({
             <tbody>
               {escalations.map((e) => {
                 const urgent = isUrgent(e.deadline) && e.status !== '완료'
-                return (
-                  <tr key={e.id} className="border-b border-slate-50 last:border-0">
+                const colSpan = canAny ? 7 : 6
+                return [
+                  <tr key={e.id} className={e.decision ? '' : 'border-b border-slate-50 last:border-0'}>
                     <td className="py-2.5 font-semibold">{e.item}</td>
                     <td className="py-2.5"><Badge tone="blue">{e.tier}</Badge></td>
                     <td className="py-2.5">{e.dept}</td>
@@ -138,8 +142,28 @@ export function EscalationManager({
                         )}
                       </td>
                     )}
-                  </tr>
-                )
+                  </tr>,
+                  e.decision ? (
+                    <tr key={e.id + '-dec'} className="border-b border-slate-50 last:border-0">
+                      <td colSpan={colSpan} className="pb-2.5">
+                        <Link
+                          href="/decisions"
+                          className="flex items-start gap-2 rounded-md bg-green-50 px-3 py-2 text-[12px] text-slate-700 transition hover:bg-green-100"
+                        >
+                          <CornerDownRight size={13} className="mt-0.5 shrink-0 text-[#70AD47]" />
+                          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span className="inline-flex items-center gap-1 font-bold text-[#548235]">
+                              <CheckSquare size={12} /> 결정 기록됨
+                            </span>
+                            <span className="font-semibold text-navy">{e.decision.content}</span>
+                            <span className="text-slate-400">· {e.decision.decider} · {e.decision.date}</span>
+                            <span className="text-navy-light underline">결정 로그에서 보기</span>
+                          </span>
+                        </Link>
+                      </td>
+                    </tr>
+                  ) : null,
+                ]
               })}
             </tbody>
           </table>
@@ -172,6 +196,9 @@ export function EscalationManager({
           <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
             <option>대기중</option><option>검토중</option><option>완료</option>
           </select>
+          <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
+            <CheckSquare size={11} /> '완료'로 변경하면 결정 로그가 자동 기록되고 이 항목과 연결됩니다.
+          </p>
         </Field>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)}>취소</Button>
