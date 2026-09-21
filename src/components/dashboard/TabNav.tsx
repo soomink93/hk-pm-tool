@@ -13,12 +13,14 @@ import {
   KanbanSquare,
   History,
   ListChecks,
+  Mail,
 } from 'lucide-react'
 import { TABS } from '@/lib/constants'
 import type { Role } from '@/lib/rbac'
 
 const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   overview: LayoutDashboard,
+  weekly: Mail,
   'my-tasks': ListChecks,
   brief: FileText,
   collaboration: Handshake,
