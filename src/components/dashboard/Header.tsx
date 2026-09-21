@@ -22,20 +22,20 @@ const ROLE_CHIP: Record<Role, string> = {
 
 export function Header({ name, role }: { name: string; role: Role }) {
   return (
-    <header className="flex items-center gap-4 bg-navy px-6 py-3.5 text-white">
+    <header className="flex items-center gap-3 bg-navy px-4 py-3 text-white sm:gap-4 sm:px-6 sm:py-3.5">
       <div className="flex shrink-0 items-center gap-2">
         <Building2 size={18} />
-        <h1 className="whitespace-nowrap text-base font-bold">HK 운영 대시보드</h1>
+        <h1 className="whitespace-nowrap text-sm font-bold sm:text-base">HK 운영 대시보드</h1>
       </div>
       <div className="hidden flex-1 justify-center md:flex">
         <GlobalSearch />
       </div>
-      <div className="flex shrink-0 items-center gap-3 ml-auto md:ml-0">
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
         <NotificationBell />
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${ROLE_CHIP[role]}`}>
           {ROLE_LABEL[role]}
         </span>
-        <span className="rounded-full bg-navy-light px-3 py-1 text-xs font-semibold">{name}</span>
+        <span className="hidden rounded-full bg-navy-light px-3 py-1 text-xs font-semibold sm:inline">{name}</span>
         <LogoutButton />
       </div>
     </header>

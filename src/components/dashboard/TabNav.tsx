@@ -37,7 +37,7 @@ export function TabNav({ role }: { role: Role }) {
   const tabs = TABS.filter((t) => (t.roles as readonly string[]).includes(role))
 
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-line bg-white px-6">
+    <nav className="flex gap-1 overflow-x-auto border-b border-line bg-white px-4 sm:px-6">
       {tabs.map((t) => {
         const href = `/${t.id}`
         const active = pathname === href || pathname.startsWith(href + '/')

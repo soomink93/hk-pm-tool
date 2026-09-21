@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
 import { logAudit } from '@/lib/audit'
-import { createCollabNotifications } from '@/lib/notify'
+import { createCollabNotifications, notifyTaskAssigned } from '@/lib/notify'
 import { COLLAB_STATE_LABEL } from '@/lib/constants'
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done']
@@ -84,6 +84,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const updated = await prisma.task.update({ where: { id }, data })
   await logAudit(g.session, 'update', 'task', id, `작업 수정: ${updated.title} (${updated.status})`)
   if (updated.status === 'done' && task.status !== 'done') await syncCollabOnTaskDone(updated.collaborationId, g.session)
+  // 담당자가 새로 바뀌었으면 알림
+  if (updated.assigneeId && updated.assigneeId !== task.assigneeId)
+    await notifyTaskAssigned({ assigneeId: updated.assigneeId, title: updated.title, team: updated.team, dueDate: updated.dueDate }, g.session.user.id)
   return NextResponse.json(updated)
 }
 

@@ -1,0 +1,17 @@
+{
+  "name": "HK 운영 대시보드",
+  "short_name": "HK 대시보드",
+  "description": "HK 사내 운영 대시보드",
+  "start_url": "/overview",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1F3864",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

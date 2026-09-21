@@ -106,7 +106,8 @@ export function EscalationManager({
         {escalations.length === 0 ? (
           <p className="py-8 text-center text-[13px] text-slate-400">등록된 항목이 없습니다.</p>
         ) : (
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr className="border-b-2 border-line text-left text-[11px] uppercase tracking-wide text-slate-500">
                 <th className="py-2.5">항목</th>
@@ -171,6 +172,7 @@ export function EscalationManager({
               })}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
 

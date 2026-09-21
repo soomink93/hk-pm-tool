@@ -118,7 +118,8 @@ export function DecisionsManager({
             {decisions.length === 0 ? '등록된 결정이 없습니다.' : '해당 분류의 결정이 없습니다.'}
           </p>
         ) : (
-          <table className="w-full text-[13px]">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr className="border-b-2 border-line text-left text-[11px] uppercase tracking-wide text-slate-500">
                 <th className="py-2.5">날짜</th>
@@ -168,6 +169,7 @@ export function DecisionsManager({
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
 

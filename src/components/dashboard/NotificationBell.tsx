@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Handshake, RefreshCw, MessageSquare } from 'lucide-react'
+import { Bell, Handshake, RefreshCw, MessageSquare, KanbanSquare, TriangleAlert, Clock } from 'lucide-react'
 
 type Noti = {
   id: string
@@ -15,12 +15,19 @@ type Noti = {
   createdAt: string
 }
 
-const KIND_LABEL: Record<string, string> = { request: '협업 요청', status: '상태 변경', comment: '새 댓글' }
+const KIND_LABEL: Record<string, string> = {
+  request: '협업 요청', status: '상태 변경', comment: '새 댓글',
+  task: '작업 배정', escalation: '결정 요청', reminder: '마감 리마인더',
+}
 const KIND_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   request: Handshake,
   status: RefreshCw,
   comment: MessageSquare,
+  task: KanbanSquare,
+  escalation: TriangleAlert,
+  reminder: Clock,
 }
+const COLLAB_KINDS = ['request', 'status', 'comment']
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -93,7 +100,7 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-xl bg-white text-slate-800 shadow-2xl ring-1 ring-black/10">
-          <div className="border-b border-line px-4 py-2.5 text-[13px] font-bold text-navy">협업 알림</div>
+          <div className="border-b border-line px-4 py-2.5 text-[13px] font-bold text-navy">알림</div>
           <div className="max-h-80 overflow-y-auto">
             {items.length === 0 ? (
               <p className="px-4 py-8 text-center text-[13px] text-slate-400">새로운 알림이 없습니다.</p>
@@ -110,11 +117,15 @@ export function NotificationBell() {
                       <Icon size={14} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px]">
-                        <b className="text-navy">{n.fromTeam}</b>
-                        <span className="text-slate-400"> → </span>
-                        <b className="text-navy">{n.toTeam}</b> {KIND_LABEL[n.kind] ?? '알림'}
-                      </p>
+                      {COLLAB_KINDS.includes(n.kind) && n.fromTeam && n.toTeam ? (
+                        <p className="text-[13px]">
+                          <b className="text-navy">{n.fromTeam}</b>
+                          <span className="text-slate-400"> → </span>
+                          <b className="text-navy">{n.toTeam}</b> {KIND_LABEL[n.kind] ?? '알림'}
+                        </p>
+                      ) : (
+                        <p className="text-[13px] font-semibold text-navy">{KIND_LABEL[n.kind] ?? '알림'}</p>
+                      )}
                       <p className="mt-0.5 break-words text-xs text-slate-500">{n.content}</p>
                       <p className="mt-0.5 text-[11px] text-slate-400">{timeAgo(n.createdAt)}</p>
                     </div>

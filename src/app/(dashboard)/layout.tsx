@@ -18,7 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen flex-col">
       <Header name={name ?? team ?? '사용자'} role={role} />
       <TabNav role={role} />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-5 sm:px-6 sm:py-6">{children}</main>
     </div>
   )
 }

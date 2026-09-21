@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { CollabStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
-import { createCollabNotifications } from '@/lib/notify'
+import { createCollabNotifications, notifyTaskAssigned } from '@/lib/notify'
 import { COLLAB_STATE_LABEL } from '@/lib/constants'
 import { isFullEditor, type Role } from '@/lib/rbac'
 import { editableTeams, canEditTeam } from '@/lib/scope'
@@ -75,6 +75,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           createdByName: name ?? '',
         },
       })
+      if (assigneeId)
+        await notifyTaskAssigned({ assigneeId, title: collab.content, team: collab.toTeam, dueDate: b.dueDate ? String(b.dueDate) : '' }, userId)
     }
   }
 

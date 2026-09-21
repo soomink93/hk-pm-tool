@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
 import { logAudit } from '@/lib/audit'
+import { notifyTaskAssigned } from '@/lib/notify'
 
 const STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done']
 
@@ -60,5 +61,7 @@ export async function POST(req: Request) {
     },
   })
   await logAudit(g.session, 'create', 'task', task.id, `작업 추가: ${task.title} (${taskTeam})`)
+  if (task.assigneeId)
+    await notifyTaskAssigned({ assigneeId: task.assigneeId, title: task.title, team: task.team, dueDate: task.dueDate }, userId)
   return NextResponse.json(task, { status: 201 })
 }

@@ -3,6 +3,14 @@ import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
 import { logAudit } from '@/lib/audit'
+import { notifyEscalationCreated } from '@/lib/notify'
+
+// 단계별 알림 대상 결정권자
+const TIER_DECIDER_ROLES: Record<string, string[]> = {
+  '1단계': ['admin'],
+  '2단계': ['executive', 'admin'],
+  '3단계': ['chairman', 'president', 'admin'],
+}
 
 export async function GET() {
   const g = await guard()
@@ -29,5 +37,16 @@ export async function POST(req: Request) {
     },
   })
   await logAudit(g.session, 'create', 'escalation', escalation.id, `결정 요청 등록: ${escalation.item}`)
+  await notifyEscalationCreated(
+    {
+      item: escalation.item,
+      dept: escalation.dept,
+      needed: escalation.needed,
+      tier: escalation.tier,
+      deadline: escalation.deadline,
+      deciderRoles: TIER_DECIDER_ROLES[escalation.tier] ?? ['admin'],
+    },
+    g.session.user.id,
+  )
   return NextResponse.json(escalation, { status: 201 })
 }
