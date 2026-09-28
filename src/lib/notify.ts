@@ -61,7 +61,19 @@ export async function notifyUsers(
   if (opts.email) await emailBestEffort(list, opts.email.subject, notiEmailHtml(opts.email.title, opts.email.lines, opts.href))
 }
 
-// 협업 관련 알림: 지정 팀들의 팀장 + 전체 임원/관리자에게 (행위자 제외) + 이메일
+// 특정 팀의 이해관계자: 해당 팀 소속(팀장·팀원) + 그 팀이 속한 부문의 임원
+async function teamStakeholders(teamName: string): Promise<string[]> {
+  const team = await prisma.team.findUnique({ where: { name: teamName }, select: { department: true } })
+  const [members, execs] = await Promise.all([
+    prisma.user.findMany({ where: { team: teamName }, select: { id: true } }),
+    team?.department
+      ? prisma.user.findMany({ where: { role: 'executive', department: team.department }, select: { id: true } })
+      : Promise.resolve([] as { id: string }[]),
+  ])
+  return [...members.map((m) => m.id), ...execs.map((e) => e.id)]
+}
+
+// 협업 알림: '관련 팀'의 이해관계자에게만 (요청=받는 팀, 상태·댓글=양쪽 팀) — 행위자 제외
 export async function createCollabNotifications(opts: {
   teams: string[]
   fromTeam: string
@@ -70,15 +82,13 @@ export async function createCollabNotifications(opts: {
   kind: 'request' | 'status' | 'comment'
   actorId: string
 }) {
-  const [leads, execs] = await Promise.all([
-    prisma.user.findMany({ where: { role: 'teamlead', team: { in: opts.teams } }, select: { id: true } }),
-    prisma.user.findMany({ where: { role: { in: ['executive', 'admin'] } }, select: { id: true } }),
-  ])
-  const ids = new Set<string>([...leads.map((l) => l.id), ...execs.map((e) => e.id)])
+  const lists = await Promise.all(opts.teams.map((t) => teamStakeholders(t)))
+  const ids = new Set<string>(lists.flat())
   ids.delete(opts.actorId)
   if (ids.size === 0) return
+  const recipients = [...ids]
   await prisma.notification.createMany({
-    data: [...ids].map((uid) => ({
+    data: recipients.map((uid) => ({
       recipientUserId: uid,
       fromTeam: opts.fromTeam,
       toTeam: opts.toTeam,
@@ -91,7 +101,7 @@ export async function createCollabNotifications(opts: {
   if (opts.kind === 'request') {
     const label = `${opts.fromTeam} → ${opts.toTeam} 협업 요청`
     await emailBestEffort(
-      [...ids],
+      recipients,
       `[HK] ${label}`,
       notiEmailHtml('새 협업 요청', [label, opts.content], '/collaboration'),
     )
@@ -117,11 +127,29 @@ export async function notifyTaskAssigned(opts: { assigneeId: string; title: stri
   )
 }
 
-// 결정 요청 등록 시 해당 단계 결정권자에게 알림
-export async function notifyEscalationCreated(opts: { item: string; dept: string; needed: string; tier: string; deadline?: string; deciderRoles: string[] }, actorId?: string) {
-  const deciders = await prisma.user.findMany({ where: { role: { in: opts.deciderRoles as never } }, select: { id: true } })
+// 단계별 결정권자를 '해당 부문' 기준으로 정확히 해소
+// 1단계 → 해당 팀 팀장, 2단계 → 해당 부문 임원, 3단계 → 회장·사장
+async function escalationDeciderIds(dept: string, tier: string): Promise<string[]> {
+  if (tier === '3단계') {
+    const tops = await prisma.user.findMany({ where: { role: { in: ['chairman', 'president'] } }, select: { id: true } })
+    return tops.map((t) => t.id)
+  }
+  if (tier === '2단계') {
+    const team = await prisma.team.findUnique({ where: { name: dept }, select: { department: true } })
+    if (!team?.department) return []
+    const execs = await prisma.user.findMany({ where: { role: 'executive', department: team.department }, select: { id: true } })
+    return execs.map((e) => e.id)
+  }
+  // 1단계: 해당 팀의 팀장
+  const leads = await prisma.user.findMany({ where: { team: dept, role: 'teamlead' }, select: { id: true } })
+  return leads.map((l) => l.id)
+}
+
+// 결정 요청 등록 시 해당 부문·단계의 결정권자에게만 알림
+export async function notifyEscalationCreated(opts: { item: string; dept: string; needed: string; tier: string; deadline?: string }, actorId?: string) {
+  const deciderIds = await escalationDeciderIds(opts.dept, opts.tier)
   await notifyUsers(
-    deciders.map((d) => d.id),
+    deciderIds,
     {
       kind: 'escalation',
       content: `[${opts.tier}] 결정 요청: ${opts.item} (${opts.dept})`,

@@ -5,13 +5,6 @@ import { editableTeams, canEditTeam } from '@/lib/scope'
 import { logAudit } from '@/lib/audit'
 import { notifyEscalationCreated } from '@/lib/notify'
 
-// 단계별 알림 대상 결정권자
-const TIER_DECIDER_ROLES: Record<string, string[]> = {
-  '1단계': ['admin'],
-  '2단계': ['executive', 'admin'],
-  '3단계': ['chairman', 'president', 'admin'],
-}
-
 export async function GET() {
   const g = await guard()
   if (g.res) return g.res
@@ -44,7 +37,6 @@ export async function POST(req: Request) {
       needed: escalation.needed,
       tier: escalation.tier,
       deadline: escalation.deadline,
-      deciderRoles: TIER_DECIDER_ROLES[escalation.tier] ?? ['admin'],
     },
     g.session.user.id,
   )
