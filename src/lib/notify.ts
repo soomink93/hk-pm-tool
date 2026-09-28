@@ -127,22 +127,28 @@ export async function notifyTaskAssigned(opts: { assigneeId: string; title: stri
   )
 }
 
-// 단계별 결정권자를 '해당 부문' 기준으로 정확히 해소
+// 단계별 결정권자를 '해당 부문' 기준으로 정확히 해소 (+ 관리자는 항상 포함)
 // 1단계 → 해당 팀 팀장, 2단계 → 해당 부문 임원, 3단계 → 회장·사장
 async function escalationDeciderIds(dept: string, tier: string): Promise<string[]> {
+  const admins = await prisma.user.findMany({ where: { role: 'admin' }, select: { id: true } })
+  const adminIds = admins.map((a) => a.id)
+
+  let tierIds: string[] = []
   if (tier === '3단계') {
     const tops = await prisma.user.findMany({ where: { role: { in: ['chairman', 'president'] } }, select: { id: true } })
-    return tops.map((t) => t.id)
-  }
-  if (tier === '2단계') {
+    tierIds = tops.map((t) => t.id)
+  } else if (tier === '2단계') {
     const team = await prisma.team.findUnique({ where: { name: dept }, select: { department: true } })
-    if (!team?.department) return []
-    const execs = await prisma.user.findMany({ where: { role: 'executive', department: team.department }, select: { id: true } })
-    return execs.map((e) => e.id)
+    if (team?.department) {
+      const execs = await prisma.user.findMany({ where: { role: 'executive', department: team.department }, select: { id: true } })
+      tierIds = execs.map((e) => e.id)
+    }
+  } else {
+    // 1단계: 해당 팀의 팀장
+    const leads = await prisma.user.findMany({ where: { team: dept, role: 'teamlead' }, select: { id: true } })
+    tierIds = leads.map((l) => l.id)
   }
-  // 1단계: 해당 팀의 팀장
-  const leads = await prisma.user.findMany({ where: { team: dept, role: 'teamlead' }, select: { id: true } })
-  return leads.map((l) => l.id)
+  return [...new Set([...tierIds, ...adminIds])]
 }
 
 // 결정 요청 등록 시 해당 부문·단계의 결정권자에게만 알림
