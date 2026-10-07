@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { can, visibleTabs } from './rbac'
+import { can, visibleTabs, canEditProject } from './rbac'
 
 describe('can', () => {
   it('decision:write executive only; chairman read-only', () => {
@@ -35,5 +35,19 @@ describe('visibleTabs', () => {
     expect(visibleTabs('teamlead')).toContain('overview')
     expect(visibleTabs('executive')).toContain('overview')
     expect(visibleTabs('chairman')).toContain('overview')
+  })
+})
+
+describe('canEditProject', () => {
+  it('full editors can edit any project', () => {
+    expect(canEditProject('admin', 'u1', 'u2')).toBe(true)
+    expect(canEditProject('chairman', null, 'u2')).toBe(true)
+  })
+  it('owner can edit own project', () => {
+    expect(canEditProject('teamlead', 'u2', 'u2')).toBe(true)
+  })
+  it('non-owner non-full cannot edit', () => {
+    expect(canEditProject('teamlead', 'u1', 'u2')).toBe(false)
+    expect(canEditProject('executive', 'u1', 'u2')).toBe(false)
   })
 })

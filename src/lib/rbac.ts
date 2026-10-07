@@ -42,3 +42,7 @@ export const canDecideTier = (role: Role, tier: string): boolean =>
 
 export const visibleTabs = (role: Role): string[] =>
   TABS.filter((t) => (t.roles as readonly string[]).includes(role)).map((t) => t.id)
+
+// 프로젝트 수정·삭제 권한: 전체 편집자이거나 본인이 담당자(owner)
+export const canEditProject = (role: Role, ownerId: string | null, userId: string): boolean =>
+  isFullEditor(role) || (!!ownerId && ownerId === userId)
