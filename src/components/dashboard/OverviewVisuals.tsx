@@ -143,3 +143,20 @@ export function TeamStatusGrid({ teams }: { teams: { name: string; lead: string;
     </div>
   )
 }
+
+export function ProjectsSummary({ projects }: { projects: { id: string; name: string; done: number; total: number }[] }) {
+  if (projects.length === 0) return <p className="py-4 text-center text-[13px] text-slate-400">진행 중 프로젝트 없음</p>
+  return (
+    <div className="space-y-2.5">
+      {projects.map((p) => {
+        const pct = p.total ? Math.round((p.done / p.total) * 100) : 0
+        return (
+          <a key={p.id} href={`/projects/${p.id}`} className="block rounded-lg border border-line px-3 py-2 transition hover:bg-slate-50">
+            <div className="flex items-center justify-between text-[13px]"><span className="font-semibold text-navy">{p.name}</span><span className="text-[11px] text-slate-400">{p.done}/{p.total} · {pct}%</span></div>
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-navy-light" style={{ width: `${pct}%` }} /></div>
+          </a>
+        )
+      })}
+    </div>
+  )
+}

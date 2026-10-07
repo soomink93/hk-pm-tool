@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { OverviewSummary } from '@/components/dashboard/OverviewSummary'
-import { StatTile, ProgressRing, SegmentBar, TrendBars, TeamStatusGrid } from '@/components/dashboard/OverviewVisuals'
+import { StatTile, ProgressRing, SegmentBar, TrendBars, TeamStatusGrid, ProjectsSummary } from '@/components/dashboard/OverviewVisuals'
 import { isUrgent } from '@/lib/helpers'
 import { COLLAB_STATE_LABEL, TASK_STATUS_LABEL } from '@/lib/constants'
 
@@ -73,6 +73,14 @@ export default async function OverviewPage() {
     id: e.id, item: e.item, dept: e.dept, needed: e.needed, deadline: e.deadline, status: e.status, urgent: isUrgent(e.deadline),
   }))
 
+  // 진행 중 프로젝트
+  const activeProjects = await prisma.project.findMany({ where: { status: 'active' }, orderBy: { createdAt: 'desc' }, take: 5 })
+  const projTasks = await prisma.task.findMany({ where: { projectId: { in: activeProjects.map((p) => p.id) } }, select: { projectId: true, status: true } })
+  const projSummary = activeProjects.map((p) => {
+    const pt = projTasks.filter((t) => t.projectId === p.id)
+    return { id: p.id, name: p.name, done: pt.filter((t) => t.status === 'done').length, total: pt.length }
+  })
+
   return (
     <div className="space-y-4">
       <OverviewSummary
@@ -123,6 +131,12 @@ export default async function OverviewPage() {
       <Card>
         <h2 className="mb-3 text-base font-bold text-navy">팀 상태</h2>
         <TeamStatusGrid teams={teamRows} />
+      </Card>
+
+      {/* 진행 중 프로젝트 */}
+      <Card>
+        <h2 className="mb-3 text-base font-bold text-navy">진행 중 프로젝트</h2>
+        <ProjectsSummary projects={projSummary} />
       </Card>
 
       {/* 오픈 결정 요청 */}
