@@ -2,19 +2,19 @@ import { describe, it, expect } from 'vitest'
 import { can, visibleTabs, canEditProject } from './rbac'
 
 describe('can', () => {
-  it('decision:write executive only; chairman read-only', () => {
+  it('decision:write full editors + executive; teamlead cannot', () => {
     expect(can('executive', 'decision:write')).toBe(true)
-    expect(can('chairman', 'decision:write')).toBe(false)
+    expect(can('chairman', 'decision:write')).toBe(true) // 전체 편집자
     expect(can('teamlead', 'decision:write')).toBe(false)
   })
-  it('escalation:write executive and teamlead', () => {
+  it('escalation:write full editors + executive + teamlead', () => {
     expect(can('executive', 'escalation:write')).toBe(true)
     expect(can('teamlead', 'escalation:write')).toBe(true)
-    expect(can('chairman', 'escalation:write')).toBe(false)
+    expect(can('chairman', 'escalation:write')).toBe(true) // 전체 편집자
   })
-  it('user:manage chairman and executive', () => {
+  it('user:manage full editors only', () => {
     expect(can('chairman', 'user:manage')).toBe(true)
-    expect(can('executive', 'user:manage')).toBe(true)
+    expect(can('executive', 'user:manage')).toBe(false)
     expect(can('teamlead', 'user:manage')).toBe(false)
   })
   it('decision:view chairman and executive only', () => {
