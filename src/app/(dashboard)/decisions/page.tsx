@@ -11,7 +11,10 @@ export default async function DecisionsPage() {
   const role = session!.user.role
   if (!can(role, 'decision:view')) notFound()
 
-  const decisions = await prisma.decision.findMany({ orderBy: { date: 'desc' } })
+  const [decisions, projectRows] = await Promise.all([
+    prisma.decision.findMany({ orderBy: { date: 'desc' }, include: { project: { select: { name: true } } } }),
+    prisma.project.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+  ])
 
   return (
     <DecisionsManager
@@ -26,10 +29,13 @@ export default async function DecisionsPage() {
         status: d.status,
         createdById: d.createdById,
         fromEscalation: !!d.escalationId,
+        projectId: d.projectId,
+        projectName: d.project?.name ?? null,
       }))}
       canAdd={can(role, 'decision:write')}
       isFull={isFullEditor(role)}
       currentUserId={session!.user.id}
+      projects={projectRows}
     />
   )
 }

@@ -10,17 +10,19 @@ export default async function TasksPage() {
   const { role, team } = session!.user
 
   const where = role === 'teamlead' ? { team: team ?? '' } : {}
-  const [tasks, teamRows, userRows] = await Promise.all([
+  const [tasks, teamRows, userRows, projectRows] = await Promise.all([
     prisma.task.findMany({
       where,
       orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
       include: {
         collaboration: { select: { fromTeam: true } },
         comments: { orderBy: { createdAt: 'asc' } },
+        project: { select: { name: true } },
       },
     }),
     prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true } }),
     prisma.user.findMany({ orderBy: [{ team: 'asc' }, { name: 'asc' }], select: { id: true, name: true, team: true } }),
+    prisma.project.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }),
   ])
 
   return (
@@ -37,6 +39,8 @@ export default async function TasksPage() {
         dueDate: t.dueDate,
         createdByName: t.createdByName,
         collabFrom: t.collaboration?.fromTeam ?? null,
+        projectId: t.projectId,
+        projectName: t.project?.name ?? null,
         comments: t.comments.map((m) => ({ id: m.id, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
       }))}
       myTeam={team ?? ''}
@@ -45,6 +49,7 @@ export default async function TasksPage() {
       role={role}
       currentUserId={session!.user.id}
       editableTeams={scopeToArray(await editableTeams(session!))}
+      projects={projectRows}
     />
   )
 }

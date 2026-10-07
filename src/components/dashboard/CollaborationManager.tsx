@@ -24,6 +24,8 @@ export type Collab = {
   createdByName: string
   createdAt: string
   updatedAt: string
+  projectId: string | null
+  projectName?: string | null
   comments: Comment[]
   tasks: LinkedTask[]
 }
@@ -109,6 +111,7 @@ function CollabCard({
         </span>
         <Badge tone={COLLAB_STATE_TONE[c.status] ?? 'gray'}>{COLLAB_STATE_LABEL[c.status] ?? c.status}</Badge>
         <Badge tone={PRIO_TONE[c.priority] ?? 'gray'}>{PRIO_LABEL[c.priority] ?? c.priority}</Badge>
+        {c.projectName && <Badge tone="blue">{c.projectName}</Badge>}
         {c.dueDate && <span className="text-[11px] font-semibold text-slate-500">희망 {c.dueDate}</span>}
         <span className="ml-auto text-[11px] text-slate-400">요청 {c.createdByName} · {fmt(c.createdAt)}</span>
       </div>
@@ -234,21 +237,26 @@ export function CollaborationManager({
   teams,
   users,
   editableTeams,
+  projects,
+  lockProjectId,
 }: {
   items: Collab[]
   myTeam: string
   teams: string[]
   users: UserOpt[]
   editableTeams: 'all' | string[]
+  projects?: { id: string; name: string }[]
+  lockProjectId?: string
 }) {
   const router = useRouter()
   const refresh = () => router.refresh()
 
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ toTeam: '', content: '', priority: 'mid', dueDate: '' })
+  const [form, setForm] = useState({ toTeam: '', content: '', priority: 'mid', dueDate: '', projectId: lockProjectId ?? '' })
   const [busy, setBusy] = useState(false)
   const [statusFilter, setStatusFilter] = useState('active')
   const [teamFilter, setTeamFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState('all')
 
   const otherTeams = teams.filter((t) => t !== myTeam)
 
@@ -260,8 +268,13 @@ export function CollaborationManager({
   ]
   const statusMatch = (STATUS_FILTERS.find((f) => f.id === statusFilter) ?? STATUS_FILTERS[0]).match
 
+  const projectMatch = (c: Collab) =>
+    projectFilter === 'all' ? true : projectFilter === 'none' ? !c.projectId : c.projectId === projectFilter
   const filtered = items.filter(
-    (c) => statusMatch(c.status) && (teamFilter === 'all' || c.fromTeam === teamFilter || c.toTeam === teamFilter),
+    (c) =>
+      statusMatch(c.status) &&
+      (teamFilter === 'all' || c.fromTeam === teamFilter || c.toTeam === teamFilter) &&
+      projectMatch(c),
   )
 
   const incoming = filtered.filter((c) => c.toTeam === myTeam)
@@ -269,7 +282,7 @@ export function CollaborationManager({
   const others = filtered.filter((c) => c.toTeam !== myTeam && c.fromTeam !== myTeam)
 
   function openNew() {
-    setForm({ toTeam: otherTeams[0] ?? '', content: '', priority: 'mid', dueDate: '' })
+    setForm({ toTeam: otherTeams[0] ?? '', content: '', priority: 'mid', dueDate: '', projectId: lockProjectId ?? '' })
     setOpen(true)
   }
   async function create() {
@@ -343,6 +356,19 @@ export function CollaborationManager({
                 <option key={t}>{t}</option>
               ))}
             </select>
+            {!lockProjectId && (
+              <select
+                className={`${inputClass} w-auto py-1.5`}
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+              >
+                <option value="all">전체 프로젝트</option>
+                <option value="none">미분류</option>
+                {(projects ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            )}
             <span className="ml-auto text-[11px] text-slate-400">{filtered.length}건</span>
           </div>
 
@@ -376,6 +402,16 @@ export function CollaborationManager({
             placeholder="예: 신제품 공동 마케팅 자료 제작 협조 요청"
           />
         </Field>
+        {!lockProjectId && (
+          <Field label="프로젝트">
+            <select className={inputClass} value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })}>
+              <option value="">미지정</option>
+              {(projects ?? []).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </Field>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Field label="우선순위">
             <select className={inputClass} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>

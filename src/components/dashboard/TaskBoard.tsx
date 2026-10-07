@@ -23,6 +23,8 @@ export type Task = {
   dueDate: string
   createdByName: string
   collabFrom?: string | null
+  projectId: string | null
+  projectName?: string | null
   comments: TaskComment[]
 }
 
@@ -39,7 +41,7 @@ const byDue = (a: Task, b: Task) => {
   return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0
 }
 
-const emptyForm = (team: string) => ({
+const emptyForm = (team: string, projectId = '') => ({
   title: '',
   description: '',
   team,
@@ -47,6 +49,7 @@ const emptyForm = (team: string) => ({
   status: 'todo',
   priority: 'mid',
   dueDate: '',
+  projectId,
 })
 
 export function TaskBoard({
@@ -57,6 +60,8 @@ export function TaskBoard({
   role,
   currentUserId,
   editableTeams,
+  projects,
+  lockProjectId,
 }: {
   tasks: Task[]
   myTeam: string
@@ -65,6 +70,8 @@ export function TaskBoard({
   role: string
   currentUserId: string
   editableTeams: 'all' | string[]
+  projects?: { id: string; name: string }[]
+  lockProjectId?: string
 }) {
   const router = useRouter()
   const canEditT = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
@@ -75,20 +82,25 @@ export function TaskBoard({
 
   const [open, setOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState<Record<string, string>>(emptyForm(myTeam || teams[0] || ''))
+  const [form, setForm] = useState<Record<string, string>>(emptyForm(myTeam || teams[0] || '', lockProjectId ?? ''))
   const [busy, setBusy] = useState(false)
   const [filter, setFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState('all')
 
-  const shown = filter === 'all' ? tasks : tasks.filter((t) => t.team === filter)
+  const shownByProject =
+    projectFilter === 'all' ? tasks
+    : projectFilter === 'none' ? tasks.filter((t) => !t.projectId)
+    : tasks.filter((t) => t.projectId === projectFilter)
+  const shown = filter === 'all' ? shownByProject : shownByProject.filter((t) => t.team === filter)
 
   function openAdd() {
     setEditId(null)
-    setForm(emptyForm(role === 'teamlead' ? myTeam : myTeams.includes(filter) ? filter : myTeams[0] || ''))
+    setForm(emptyForm(role === 'teamlead' ? myTeam : myTeams.includes(filter) ? filter : myTeams[0] || '', lockProjectId ?? ''))
     setOpen(true)
   }
   function openEdit(t: Task) {
     setEditId(t.id)
-    setForm({ title: t.title, description: t.description, team: t.team, assigneeId: t.assigneeId ?? '', status: t.status, priority: t.priority, dueDate: t.dueDate })
+    setForm({ title: t.title, description: t.description, team: t.team, assigneeId: t.assigneeId ?? '', status: t.status, priority: t.priority, dueDate: t.dueDate, projectId: t.projectId ?? '' })
     setOpen(true)
   }
   async function save() {
@@ -137,6 +149,15 @@ export function TaskBoard({
               ))}
             </select>
           )}
+          {!lockProjectId && (
+            <select className={`${inputClass} w-auto py-1.5`} value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+              <option value="all">전체 프로젝트</option>
+              <option value="none">미분류</option>
+              {(projects ?? []).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          )}
           {canCreate && (
             <Button onClick={openAdd}>
               <Plus size={14} /> 새 작업
@@ -164,6 +185,9 @@ export function TaskBoard({
                         <span className="flex-1 text-[13px] font-semibold text-navy">{t.title}</span>
                         <Badge tone={PRIO_TONE[t.priority] ?? 'gray'}>{PRIO_LABEL[t.priority as keyof typeof PRIO_LABEL] ?? t.priority}</Badge>
                       </div>
+                      {t.projectName && (
+                        <div className="mb-1.5"><Badge tone="blue">{t.projectName}</Badge></div>
+                      )}
                       {t.collabFrom && (
                         <Link href="/collaboration" className="mb-1.5 inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-navy-light hover:bg-blue-100">
                           <Handshake size={10} /> {t.collabFrom} 협업
@@ -222,6 +246,16 @@ export function TaskBoard({
             <select className={inputClass} value={form.team} onChange={(e) => setForm({ ...form, team: e.target.value })}>
               {myTeams.map((t) => (
                 <option key={t}>{t}</option>
+              ))}
+            </select>
+          </Field>
+        )}
+        {!lockProjectId && !editId && (
+          <Field label="프로젝트">
+            <select className={inputClass} value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })}>
+              <option value="">미지정</option>
+              {(projects ?? []).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
           </Field>

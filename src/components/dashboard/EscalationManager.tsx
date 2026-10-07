@@ -21,9 +21,11 @@ export type Escalation = {
   deadline: string
   status: string
   decision: EscDecision | null
+  projectId: string | null
+  projectName?: string | null
 }
 
-const emptyForm = (dept: string) => ({ item: '', tier: '3단계', dept, needed: '', deadline: '', status: '대기중' })
+const emptyForm = (dept: string, projectId = '') => ({ item: '', tier: '3단계', dept, needed: '', deadline: '', status: '대기중', projectId })
 
 function statusTone(s: string): 'green' | 'yellow' | 'red' {
   return s === '완료' ? 'green' : s === '검토중' ? 'yellow' : 'red'
@@ -34,11 +36,15 @@ export function EscalationManager({
   teams,
   role,
   editableTeams,
+  projects,
+  lockProjectId,
 }: {
   escalations: Escalation[]
   teams: string[]
   role: string
   editableTeams: 'all' | string[]
+  projects?: { id: string; name: string }[]
+  lockProjectId?: string
 }) {
   const router = useRouter()
   const canEdit = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
@@ -48,8 +54,14 @@ export function EscalationManager({
 
   const [open, setOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState<Record<string, string>>(emptyForm(myTeams[0] ?? ''))
+  const [form, setForm] = useState<Record<string, string>>(emptyForm(myTeams[0] ?? '', lockProjectId ?? ''))
   const [busy, setBusy] = useState(false)
+  const [projectFilter, setProjectFilter] = useState('all')
+
+  const shown =
+    projectFilter === 'all' ? escalations
+    : projectFilter === 'none' ? escalations.filter((e) => !e.projectId)
+    : escalations.filter((e) => e.projectId === projectFilter)
 
   const openCount = escalations.filter((e) => e.status !== '완료').length
   const urgentCount = escalations.filter((e) => e.status !== '완료' && isUrgent(e.deadline)).length
@@ -57,12 +69,12 @@ export function EscalationManager({
 
   function openAdd() {
     setEditId(null)
-    setForm(emptyForm(myTeams[0] ?? ''))
+    setForm(emptyForm(myTeams[0] ?? '', lockProjectId ?? ''))
     setOpen(true)
   }
   function openEdit(e: Escalation) {
     setEditId(e.id)
-    setForm({ item: e.item, tier: e.tier, dept: e.dept, needed: e.needed, deadline: e.deadline, status: e.status })
+    setForm({ item: e.item, tier: e.tier, dept: e.dept, needed: e.needed, deadline: e.deadline, status: e.status, projectId: e.projectId ?? '' })
     setOpen(true)
   }
   async function save() {
@@ -102,9 +114,24 @@ export function EscalationManager({
         <StatCard title="완료" value={doneCount} sub="처리 완료" valueClass="text-[#70AD47]" />
       </div>
 
+      {!lockProjectId && (
+        <div className="flex items-center gap-2">
+          <select className={`${inputClass} w-auto py-1.5`} value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+            <option value="all">전체 프로젝트</option>
+            <option value="none">미분류</option>
+            {(projects ?? []).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <span className="ml-auto text-[11px] text-slate-400">{shown.length}건</span>
+        </div>
+      )}
+
       <Card>
-        {escalations.length === 0 ? (
-          <p className="py-8 text-center text-[13px] text-slate-400">등록된 항목이 없습니다.</p>
+        {shown.length === 0 ? (
+          <p className="py-8 text-center text-[13px] text-slate-400">
+            {escalations.length === 0 ? '등록된 항목이 없습니다.' : '해당 프로젝트의 항목이 없습니다.'}
+          </p>
         ) : (
           <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-[13px]">
@@ -120,12 +147,15 @@ export function EscalationManager({
               </tr>
             </thead>
             <tbody>
-              {escalations.map((e) => {
+              {shown.map((e) => {
                 const urgent = isUrgent(e.deadline) && e.status !== '완료'
                 const colSpan = canAny ? 7 : 6
                 return [
                   <tr key={e.id} className={e.decision ? '' : 'border-b border-slate-50 last:border-0'}>
-                    <td className="py-2.5 font-semibold">{e.item}</td>
+                    <td className="py-2.5 font-semibold">
+                      {e.item}
+                      {e.projectName && <span className="ml-1.5 inline-flex align-middle"><Badge tone="blue">{e.projectName}</Badge></span>}
+                    </td>
                     <td className="py-2.5"><Badge tone="blue">{e.tier}</Badge></td>
                     <td className="py-2.5">{e.dept}</td>
                     <td className="py-2.5 text-xs text-slate-500">{e.needed}</td>
@@ -180,6 +210,16 @@ export function EscalationManager({
         <Field label="항목명">
           <input className={inputClass} value={form.item} onChange={(e) => setForm({ ...form, item: e.target.value })} />
         </Field>
+        {!lockProjectId && !editId && (
+          <Field label="프로젝트">
+            <select className={inputClass} value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })}>
+              <option value="">미지정</option>
+              {(projects ?? []).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </Field>
+        )}
         <Field label="단계 (결정권자)">
           <select className={inputClass} value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
             <option>1단계</option><option>2단계</option><option>3단계</option>

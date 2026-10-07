@@ -22,6 +22,8 @@ export type Decision = {
   status: string
   createdById: string | null
   fromEscalation: boolean
+  projectId?: string | null
+  projectName?: string | null
 }
 
 export const DECISION_CATEGORIES = ['예산', '인사', '계약', '전략', '운영', '기타'] as const
@@ -37,11 +39,15 @@ export function DecisionsManager({
   canAdd,
   isFull,
   currentUserId,
+  projects,
+  lockProjectId,
 }: {
   decisions: Decision[]
   canAdd: boolean
   isFull: boolean
   currentUserId: string
+  projects?: { id: string; name: string }[]
+  lockProjectId?: string
 }) {
   const router = useRouter()
   const canEditRow = (d: Decision) => isFull || d.createdById === currentUserId
@@ -50,8 +56,14 @@ export function DecisionsManager({
   const [form, setForm] = useState<Record<string, string>>(emptyForm())
   const [busy, setBusy] = useState(false)
   const [catFilter, setCatFilter] = useState('all')
+  const [projectFilter, setProjectFilter] = useState('all')
 
-  const shown = catFilter === 'all' ? decisions : decisions.filter((d) => d.category === catFilter)
+  const effectiveProject = lockProjectId ?? projectFilter
+  const shownByProject =
+    effectiveProject === 'all' ? decisions
+    : effectiveProject === 'none' ? decisions.filter((d) => !d.projectId)
+    : decisions.filter((d) => d.projectId === effectiveProject)
+  const shown = catFilter === 'all' ? shownByProject : shownByProject.filter((d) => d.category === catFilter)
 
   function openAdd() {
     setEditId(null)
@@ -110,6 +122,15 @@ export function DecisionsManager({
             {c}
           </button>
         ))}
+        {!lockProjectId && (
+          <select className={`${inputClass} ml-2 w-auto py-1.5`} value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+            <option value="all">전체 프로젝트</option>
+            <option value="none">미분류</option>
+            {(projects ?? []).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       <Card>
@@ -139,6 +160,7 @@ export function DecisionsManager({
                   <td className="py-2.5"><Badge tone={CATEGORY_TONE[d.category] ?? 'gray'}>{d.category}</Badge></td>
                   <td className="py-2.5 font-semibold">
                     {d.content}
+                    {d.projectName && <span className="ml-1.5 inline-flex align-middle"><Badge tone="blue">{d.projectName}</Badge></span>}
                     {d.fromEscalation && (
                       <Link href="/escalation" className="ml-1.5 inline-flex align-middle" title="결정 요청에서 올라온 결정 — 원 항목 보기">
                         <Badge tone="blue">↩ 결정 요청</Badge>
