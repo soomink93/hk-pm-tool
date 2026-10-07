@@ -40,8 +40,12 @@ export async function POST(req: Request) {
   const priority = ['high', 'mid', 'low'].includes(b.priority) ? String(b.priority) : 'mid'
   const dueDate = b.dueDate ? String(b.dueDate) : ''
 
+  const projectId = b.projectId
+    ? (await prisma.project.findUnique({ where: { id: String(b.projectId) }, select: { id: true } }))?.id ?? null
+    : null
+
   const collab = await prisma.collaboration.create({
-    data: { fromTeam: team, toTeam, content, priority, dueDate, createdById: userId, createdByName: name ?? '', status: 'requested' },
+    data: { fromTeam: team, toTeam, content, priority, dueDate, createdById: userId, createdByName: name ?? '', status: 'requested', projectId },
   })
   await createCollabNotifications({
     teams: [toTeam],

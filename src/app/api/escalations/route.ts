@@ -19,8 +19,12 @@ export async function POST(req: Request) {
   const dept = String(b.dept ?? '')
   const scope = await editableTeams(g.session)
   if (!canEditTeam(scope, dept)) return NextResponse.json({ error: '해당 팀의 결정 요청을 등록할 권한이 없습니다.' }, { status: 403 })
+  const projectId = b.projectId
+    ? (await prisma.project.findUnique({ where: { id: String(b.projectId) }, select: { id: true } }))?.id ?? null
+    : null
   const escalation = await prisma.escalation.create({
     data: {
+      projectId,
       item: String(b.item ?? ''),
       tier: String(b.tier ?? ''),
       dept,

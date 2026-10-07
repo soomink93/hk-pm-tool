@@ -46,8 +46,13 @@ export async function POST(req: Request) {
     }
   }
 
+  const projectId = b.projectId
+    ? (await prisma.project.findUnique({ where: { id: String(b.projectId) }, select: { id: true } }))?.id ?? null
+    : null
+
   const task = await prisma.task.create({
     data: {
+      projectId,
       title,
       description: String(b.description ?? ''),
       team: taskTeam,
