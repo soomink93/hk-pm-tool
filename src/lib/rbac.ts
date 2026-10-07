@@ -3,7 +3,6 @@ import { TABS } from './constants'
 export type Role = 'admin' | 'chairman' | 'president' | 'executive' | 'teamlead'
 
 export type Action =
-  | 'kpi:write'
   | 'decision:write'
   | 'decision:view'
   | 'escalation:write'
@@ -14,7 +13,6 @@ export const FULL_EDIT_ROLES: Role[] = ['admin', 'chairman', 'president']
 export const isFullEditor = (role: Role): boolean => FULL_EDIT_ROLES.includes(role)
 
 const MATRIX: Record<Action, Role[]> = {
-  'kpi:write': ['executive'], // + 부문 팀 범위로 추가 제한
   'decision:write': ['executive'], // 임원은 본인이 작성한 것만 수정/삭제
   'decision:view': ['executive'],
   'escalation:write': ['executive', 'teamlead'], // + 부문/팀 범위

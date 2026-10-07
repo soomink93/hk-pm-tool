@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
-  FileText,
-  BarChart3,
   CheckSquare,
   TriangleAlert,
   Settings,
@@ -22,10 +20,8 @@ const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   overview: LayoutDashboard,
   weekly: Mail,
   'my-tasks': ListChecks,
-  brief: FileText,
   collaboration: Handshake,
   tasks: KanbanSquare,
-  kpi: BarChart3,
   decisions: CheckSquare,
   escalation: TriangleAlert,
   audit: History,

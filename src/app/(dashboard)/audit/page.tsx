@@ -10,8 +10,8 @@ export const dynamic = 'force-dynamic'
 const ACTION_LABEL: Record<string, string> = { create: '생성', update: '수정', delete: '삭제', status: '상태변경' }
 const ACTION_TONE: Record<string, 'green' | 'yellow' | 'red' | 'blue'> = { create: 'green', update: 'yellow', delete: 'red', status: 'blue' }
 const ENTITY_LABEL: Record<string, string> = {
-  decision: '결정', escalation: '결정 요청', task: '작업', kpi: 'KPI',
-  collaboration: '협업', user: '사용자', team: '팀', brief: '주간보고',
+  decision: '결정', escalation: '결정 요청', task: '작업',
+  collaboration: '협업', user: '사용자', team: '팀',
 }
 const PERIODS = [
   { id: '7d', label: '최근 7일', days: 7 },

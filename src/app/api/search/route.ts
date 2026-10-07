@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const q = (new URL(req.url).searchParams.get('q') ?? '').trim()
   if (q.length < 1) return NextResponse.json({ results: [] })
 
-  const { role, team } = g.session.user
+  const { role } = g.session.user
   const like = { contains: q, mode: 'insensitive' as const }
   const results: Hit[] = []
 
@@ -32,25 +32,7 @@ export async function GET(req: Request) {
       id: t.id,
       title: t.name,
       subtitle: `팀장 ${t.lead} · ${STATUS_LABEL[t.status as keyof typeof STATUS_LABEL] ?? t.status}`,
-      href: '/brief',
-    })
-
-  // KPI (팀장은 본인 팀만)
-  const kpis = await prisma.kpi.findMany({
-    where: {
-      AND: [role === 'teamlead' ? { team: team ?? '' } : {}, { OR: [{ metric: like }, { team: like }] }],
-    },
-    take: TAKE,
-    orderBy: { team: 'asc' },
-  })
-  for (const k of kpis)
-    results.push({
-      type: 'kpi',
-      typeLabel: 'KPI',
-      id: k.id,
-      title: k.metric,
-      subtitle: `${k.team} · ${k.current}/${k.target}${k.unit}`,
-      href: '/kpi',
+      href: '/overview',
     })
 
   // 결정 (열람 권한 있는 역할만)
@@ -85,27 +67,6 @@ export async function GET(req: Request) {
       title: e.item,
       subtitle: `${e.dept} · 기한 ${e.deadline} · ${e.status}`,
       href: '/escalation',
-    })
-
-  // 주간보고 (팀장은 본인 팀만)
-  const briefs = await prisma.brief.findMany({
-    where: {
-      AND: [
-        role === 'teamlead' ? { team: team ?? '' } : {},
-        { OR: [{ completed: like }, { nextGoal: like }, { team: like }] },
-      ],
-    },
-    take: TAKE,
-    orderBy: { createdAt: 'desc' },
-  })
-  for (const b of briefs)
-    results.push({
-      type: 'brief',
-      typeLabel: '주간보고',
-      id: b.id,
-      title: `${b.team} 주간보고`,
-      subtitle: `${b.submittedAt} · ${b.completed}`.slice(0, 60),
-      href: '/brief',
     })
 
   // 사용자 (관리 권한 있는 역할만)

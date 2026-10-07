@@ -1,8 +1,9 @@
+import { Handshake, KanbanSquare, Clock, TriangleAlert } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { Card, StatCard } from '@/components/ui/Card'
+import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { OverviewChart } from '@/components/dashboard/OverviewChart'
 import { OverviewSummary } from '@/components/dashboard/OverviewSummary'
+import { StatTile, ProgressRing, SegmentBar, TrendBars, TeamStatusGrid } from '@/components/dashboard/OverviewVisuals'
 import { isUrgent } from '@/lib/helpers'
 import { COLLAB_STATE_LABEL, TASK_STATUS_LABEL } from '@/lib/constants'
 
@@ -22,10 +23,11 @@ const TASK_COLOR: Record<string, string> = {
 }
 
 export default async function OverviewPage() {
-  const [collabs, tasks, escalations] = await Promise.all([
+  const [collabs, tasks, escalations, teamRows] = await Promise.all([
     prisma.collaboration.findMany({ orderBy: { updatedAt: 'desc' } }),
     prisma.task.findMany({ orderBy: { dueDate: 'asc' } }),
     prisma.escalation.findMany({ orderBy: { deadline: 'asc' } }),
+    prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true, lead: true, status: true } }),
   ])
 
   const today = new Date().toISOString().slice(0, 10)
@@ -36,17 +38,16 @@ export default async function OverviewPage() {
   const activeCollabs = collabs.filter((c) => activeStatuses.includes(c.status))
   const collabDist = (['requested', 'accepted', 'in_progress', 'done', 'declined'] as const)
     .map((s) => ({ label: COLLAB_STATE_LABEL[s], value: collabs.filter((c) => c.status === s).length, color: COLLAB_COLOR[s] }))
-    .filter((d) => d.value > 0)
 
   // 작업
   const openTasks = tasks.filter((t) => t.status !== 'done')
+  const doneTasks = tasks.filter((t) => t.status === 'done')
   const overdueTasks = openTasks.filter((t) => t.dueDate && t.dueDate < today)
   const attentionTasks = openTasks
     .filter((t) => t.dueDate && t.dueDate <= soon)
     .map((t) => ({ id: t.id, title: t.title, team: t.team, assignee: t.assignee, dueDate: t.dueDate, priority: t.priority, overdue: t.dueDate < today }))
   const taskDist = (['todo', 'in_progress', 'done'] as const)
     .map((s) => ({ label: TASK_STATUS_LABEL[s], value: tasks.filter((t) => t.status === s).length, color: TASK_COLOR[s] }))
-    .filter((d) => d.value > 0)
 
   // 최근 7일 vs 지난 7일 추세
   const d7 = new Date(Date.now() - 7 * 86_400_000)
@@ -60,12 +61,12 @@ export default async function OverviewPage() {
     prisma.escalation.count({ where: { createdAt: { gte: d14, lt: d7 } } }),
   ])
   const trend = [
-    { label: '신규 협업', now: nc7, prev: ncp },
-    { label: '완료 작업', now: dt7, prev: dtp },
-    { label: '신규 결정 요청', now: ne7, prev: nep },
+    { label: '신규 협업', now: nc7, prev: ncp, color: '#2E75B6' },
+    { label: '완료 작업', now: dt7, prev: dtp, color: '#2E8540' },
+    { label: '신규 결정 요청', now: ne7, prev: nep, color: '#C00000' },
   ]
 
-  // 에스컬레이션
+  // 결정 요청
   const openEscal = escalations.filter((e) => e.status !== '완료')
   const urgentEscal = openEscal.filter((e) => isUrgent(e.deadline))
   const pendingEscalations = openEscal.map((e) => ({
@@ -87,46 +88,46 @@ export default async function OverviewPage() {
         pendingEscalations={pendingEscalations}
       />
 
-      <Card>
-        <h2 className="mb-3 text-base font-bold text-navy">최근 7일 활동 <span className="text-xs font-normal text-slate-400">(지난 7일 대비)</span></h2>
-        <div className="grid grid-cols-3 gap-3">
-          {trend.map((t) => {
-            const delta = t.now - t.prev
-            return (
-              <div key={t.label} className="rounded-lg bg-canvas px-3 py-2.5">
-                <div className="text-[11px] font-semibold text-slate-500">{t.label}</div>
-                <div className="mt-0.5 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-extrabold text-navy">{t.now}</span>
-                  <span className={`text-xs font-bold ${delta > 0 ? 'text-[#70AD47]' : delta < 0 ? 'text-[#C00000]' : 'text-slate-400'}`}>
-                    {delta > 0 ? `▲${delta}` : delta < 0 ? `▼${Math.abs(delta)}` : '—'}
-                  </span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </Card>
-
+      {/* 핵심 지표 */}
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-        <StatCard title="진행 중 협업" value={activeCollabs.length} sub="요청·수락·진행" valueClass="text-navy-light" />
-        <StatCard title="미완료 작업" value={openTasks.length} sub="할 일 + 진행 중" />
-        <StatCard title="지연 작업" value={overdueTasks.length} sub="마감 초과" valueClass="text-[#C00000]" />
-        <StatCard title="오픈 결정 요청" value={openEscal.length} sub="결정 대기" valueClass="text-[#C00000]" />
+        <StatTile icon={Handshake} title="진행 중 협업" value={activeCollabs.length} sub="요청·수락·진행" accent="#2E75B6" delta={nc7 - ncp} />
+        <StatTile icon={KanbanSquare} title="미완료 작업" value={openTasks.length} sub="할 일 + 진행 중" accent="#B7791F" />
+        <StatTile icon={Clock} title="지연 작업" value={overdueTasks.length} sub="마감 초과" accent="#E36C09" />
+        <StatTile icon={TriangleAlert} title="오픈 결정 요청" value={openEscal.length} sub={`긴급 ${urgentEscal.length}`} accent="#C00000" delta={ne7 - nep} />
       </div>
 
+      {/* 작업 진행률 + 협업 상태 */}
       <div className="grid gap-3.5 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 text-base font-bold text-navy">협업 상태 분포</h2>
-          <OverviewChart data={collabDist} />
+          <h2 className="mb-2 text-base font-bold text-navy">작업 진행률</h2>
+          <div className="flex items-center gap-5">
+            <ProgressRing value={doneTasks.length} total={tasks.length} color="#2E8540" label="완료율" />
+            <div className="flex-1">
+              <SegmentBar segments={taskDist} />
+            </div>
+          </div>
         </Card>
         <Card>
-          <h2 className="mb-4 text-base font-bold text-navy">작업 상태 분포</h2>
-          <OverviewChart data={taskDist} />
+          <h2 className="mb-4 text-base font-bold text-navy">협업 상태 분포</h2>
+          <SegmentBar segments={collabDist} />
         </Card>
       </div>
 
+      {/* 7일 추세 */}
       <Card>
-        <h2 className="mb-4 text-base font-bold text-navy">오픈 결정 요청</h2>
+        <h2 className="mb-3 text-base font-bold text-navy">최근 7일 활동 <span className="text-xs font-normal text-slate-400">(지난 7일 대비)</span></h2>
+        <TrendBars items={trend} />
+      </Card>
+
+      {/* 팀 상태 */}
+      <Card>
+        <h2 className="mb-3 text-base font-bold text-navy">팀 상태</h2>
+        <TeamStatusGrid teams={teamRows} />
+      </Card>
+
+      {/* 오픈 결정 요청 */}
+      <Card>
+        <h2 className="mb-4 text-base font-bold text-navy">오픈 결정 요청 <span className="text-xs font-normal text-slate-400">({openEscal.length})</span></h2>
         {openEscal.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-[13px]">

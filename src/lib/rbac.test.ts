@@ -2,11 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { can, visibleTabs } from './rbac'
 
 describe('can', () => {
-  it('executive can write kpi, others cannot', () => {
-    expect(can('executive', 'kpi:write')).toBe(true)
-    expect(can('chairman', 'kpi:write')).toBe(false)
-    expect(can('teamlead', 'kpi:write')).toBe(false)
-  })
   it('decision:write executive only; chairman read-only', () => {
     expect(can('executive', 'decision:write')).toBe(true)
     expect(can('chairman', 'decision:write')).toBe(false)
