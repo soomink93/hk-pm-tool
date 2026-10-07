@@ -53,6 +53,7 @@ export const TASK_COLUMNS = ['todo', 'in_progress', 'done'] as const
 
 export const TABS = [
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'projects', label: '프로젝트', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'weekly', label: '주간 요약', roles: ['admin', 'chairman', 'president'] },
   { id: 'my-tasks', label: '내 작업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'collaboration', label: '협업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
