@@ -21,7 +21,7 @@ export default async function ProjectsPage() {
     const pt = tasks.filter((t) => t.projectId === p.id)
     const teamSet = [...new Set(pt.map((t) => t.team))]
     return {
-      id: p.id, name: p.name, status: p.status, ownerId: p.ownerId, ownerName: p.ownerName,
+      id: p.id, name: p.name, description: p.description, status: p.status, ownerId: p.ownerId, ownerName: p.ownerName,
       dueDate: p.dueDate, taskTotal: pt.length, taskDone: pt.filter((t) => t.status === 'done').length, teams: teamSet,
     }
   })

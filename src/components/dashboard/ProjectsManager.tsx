@@ -11,7 +11,7 @@ import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { canEditProject, type Role } from '@/lib/rbac'
 
 export type ProjectRow = {
-  id: string; name: string; status: string; ownerId: string | null; ownerName: string
+  id: string; name: string; description: string; status: string; ownerId: string | null; ownerName: string
   dueDate: string; taskTotal: number; taskDone: number; teams: string[]
 }
 export type UserOpt = { id: string; name: string }
@@ -65,7 +65,7 @@ export function ProjectsManager({
   function openAdd() { setEditId(null); setForm(emptyForm()); setOpen(true) }
   function openEdit(p: ProjectRow) {
     setEditId(p.id)
-    setForm({ name: p.name, description: '', ownerId: p.ownerId ?? '', dueDate: p.dueDate, status: p.status })
+    setForm({ name: p.name, description: p.description, ownerId: p.ownerId ?? '', dueDate: p.dueDate, status: p.status })
     setOpen(true)
   }
   async function save() {
