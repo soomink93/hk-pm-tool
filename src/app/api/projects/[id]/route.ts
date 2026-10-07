@@ -18,7 +18,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const b = await req.json()
   const data: Prisma.ProjectUpdateInput = {}
-  if (b.name !== undefined) data.name = String(b.name)
+  if (b.name !== undefined) {
+    const n = String(b.name).trim()
+    if (!n) return NextResponse.json({ error: '프로젝트 이름을 입력하세요.' }, { status: 400 })
+    data.name = n
+  }
   if (b.description !== undefined) data.description = String(b.description)
   if (b.dueDate !== undefined) data.dueDate = String(b.dueDate)
   if (b.status !== undefined && STATUSES.includes(b.status)) data.status = b.status as ProjectStatus
