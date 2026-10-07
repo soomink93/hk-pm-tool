@@ -17,8 +17,12 @@ export async function POST(req: Request) {
   const b = await req.json()
   const CATEGORIES = ['예산', '인사', '계약', '전략', '운영', '기타']
   const category = CATEGORIES.includes(b.category) ? String(b.category) : '기타'
+  const projectId = b.projectId
+    ? (await prisma.project.findUnique({ where: { id: String(b.projectId) }, select: { id: true } }))?.id ?? null
+    : null
   const decision = await prisma.decision.create({
     data: {
+      projectId,
       date: String(b.date ?? ''),
       content: String(b.content ?? ''),
       category,

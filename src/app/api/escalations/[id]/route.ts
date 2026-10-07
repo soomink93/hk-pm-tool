@@ -57,6 +57,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           createdById: g.session.user.id,
           createdByName: g.session.user.name ?? '',
           escalationId: id,
+          projectId: updated.projectId,
         },
       })
       await logAudit(g.session, 'create', 'decision', dec.id, `결정 요청 완료로 결정 자동 기록: ${updated.item}`)

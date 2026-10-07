@@ -27,6 +27,8 @@ export async function POST(req: Request) {
     const u = await prisma.user.findUnique({ where: { id: String(b.ownerId) }, select: { id: true, name: true } })
     if (u) { ownerId = u.id; ownerName = u.name }
   }
+  // 소유자 미지정 시 생성자가 기본 소유자 (편집 권한 유지)
+  if (!ownerId) { ownerId = userId; ownerName = name ?? '' }
   const status = STATUSES.includes(b.status) ? (b.status as ProjectStatus) : 'active'
 
   const project = await prisma.project.create({

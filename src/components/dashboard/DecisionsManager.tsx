@@ -32,7 +32,7 @@ const CATEGORY_TONE: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
-const emptyForm = () => ({ date: today(), content: '', category: '기타', tier: '2단계', decider: '', priority: 'mid', status: '완료' })
+const emptyForm = (projectId = '') => ({ date: today(), content: '', category: '기타', tier: '2단계', decider: '', priority: 'mid', status: '완료', projectId })
 
 export function DecisionsManager({
   decisions,
@@ -53,7 +53,7 @@ export function DecisionsManager({
   const canEditRow = (d: Decision) => isFull || d.createdById === currentUserId
   const [open, setOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState<Record<string, string>>(emptyForm())
+  const [form, setForm] = useState<Record<string, string>>(emptyForm(lockProjectId ?? ''))
   const [busy, setBusy] = useState(false)
   const [catFilter, setCatFilter] = useState('all')
   const [projectFilter, setProjectFilter] = useState('all')
@@ -67,7 +67,7 @@ export function DecisionsManager({
 
   function openAdd() {
     setEditId(null)
-    setForm(emptyForm())
+    setForm(emptyForm(lockProjectId ?? ''))
     setOpen(true)
   }
   function openEdit(d: Decision) {
