@@ -70,6 +70,7 @@ export function ProjectsManager({
   }
   async function save() {
     if (!form.name.trim()) return
+    if (!form.dueDate) { alert('마감일을 지정하세요.'); return }
     setBusy(true)
     const res = await fetch(editId ? `/api/projects/${editId}` : '/api/projects', {
       method: editId ? 'PATCH' : 'POST',
@@ -165,7 +166,7 @@ export function ProjectsManager({
               {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
           </Field>
-          <Field label="마감일"><input type="date" className={inputClass} value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></Field>
+          <Field label="마감일 *"><input type="date" required className={inputClass} value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></Field>
         </div>
         <Field label="상태">
           <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>

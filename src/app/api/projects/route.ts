@@ -20,6 +20,8 @@ export async function POST(req: Request) {
   const b = await req.json()
   const projName = String(b.name ?? '').trim()
   if (!projName) return NextResponse.json({ error: '프로젝트 이름을 입력하세요.' }, { status: 400 })
+  const projDue = String(b.dueDate ?? '').trim()
+  if (!projDue) return NextResponse.json({ error: '마감일을 지정하세요.' }, { status: 400 })
 
   let ownerId: string | null = null
   let ownerName = ''
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
       status,
       ownerId,
       ownerName,
-      dueDate: b.dueDate ? String(b.dueDate) : '',
+      dueDate: projDue,
       createdById: userId,
       createdByName: name ?? '',
     },

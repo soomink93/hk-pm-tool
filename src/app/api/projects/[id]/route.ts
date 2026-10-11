@@ -24,7 +24,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data.name = n
   }
   if (b.description !== undefined) data.description = String(b.description)
-  if (b.dueDate !== undefined) data.dueDate = String(b.dueDate)
+  if (b.dueDate !== undefined) {
+    const due = String(b.dueDate).trim()
+    if (!due) return NextResponse.json({ error: '마감일을 지정하세요.' }, { status: 400 })
+    data.dueDate = due
+  }
   if (b.status !== undefined && STATUSES.includes(b.status)) data.status = b.status as ProjectStatus
   if (b.ownerId !== undefined) {
     if (b.ownerId) {
