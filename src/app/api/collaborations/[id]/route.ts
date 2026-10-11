@@ -71,6 +71,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           status: 'todo',
           priority: 'mid',
           collaborationId: id,
+          projectId: collab.projectId,
           createdById: userId,
           createdByName: name ?? '',
         },
