@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import { mailConfigured, sendMail } from './mailer'
+import { parseMentionNames } from './mentions'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hk-pm-tool.vercel.app'
 
@@ -59,6 +60,15 @@ export async function notifyUsers(
     })),
   })
   if (opts.email) await emailBestEffort(list, opts.email.subject, notiEmailHtml(opts.email.title, opts.email.lines, opts.href))
+}
+
+// 댓글 본문의 @이름 멘션 → 해당 사용자에게 인앱 알림 (행위자 제외)
+export async function notifyMentions(body: string, href: string, context: string, actorId: string) {
+  const names = parseMentionNames(body)
+  if (names.length === 0) return
+  const users = await prisma.user.findMany({ where: { name: { in: names } }, select: { id: true } })
+  if (users.length === 0) return
+  await notifyUsers(users.map((u) => u.id), { kind: 'mention', content: `${context}: ${body.slice(0, 80)}`, href }, actorId)
 }
 
 // 특정 팀의 이해관계자: 해당 팀 소속(팀장·팀원) + 그 팀이 속한 부문의 임원

@@ -11,6 +11,7 @@ import { TaskBoard } from '@/components/dashboard/TaskBoard'
 import { CollaborationManager } from '@/components/dashboard/CollaborationManager'
 import { EscalationManager } from '@/components/dashboard/EscalationManager'
 import { DecisionsManager } from '@/components/dashboard/DecisionsManager'
+import { ProjectTimeline } from '@/components/dashboard/ProjectTimeline'
 
 export const dynamic = 'force-dynamic'
 
@@ -98,6 +99,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </div>
         </Card>
       </div>
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-bold text-navy">타임라인</h2>
+        <Card>
+          <ProjectTimeline
+            tasks={tasks.map((t) => ({ title: t.title, dueDate: t.dueDate, status: t.status }))}
+            projectDue={project.dueDate || undefined}
+          />
+        </Card>
+      </section>
 
       <section className="space-y-2">
         <h2 className="text-sm font-bold text-navy">작업 보드</h2>

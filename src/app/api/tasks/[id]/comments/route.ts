@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
+import { notifyMentions } from '@/lib/notify'
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard()
@@ -25,5 +26,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     data: { taskId: id, authorId: userId, authorName: name ?? '', body },
   })
   await prisma.task.update({ where: { id }, data: { updatedAt: new Date() } })
+  await notifyMentions(body, '/tasks', `작업 댓글 · ${task.title}`, userId)
   return NextResponse.json(comment, { status: 201 })
 }

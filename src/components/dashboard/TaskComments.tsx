@@ -68,7 +68,7 @@ export function TaskComments({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && add()}
-                placeholder="진행 메모·댓글…"
+                placeholder="댓글 (@이름 멘션)"
               />
               <Button onClick={add} disabled={busy || !text.trim()} className="!px-2 !py-1">
                 <Send size={12} />

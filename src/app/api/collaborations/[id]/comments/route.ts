@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
-import { createCollabNotifications } from '@/lib/notify'
+import { createCollabNotifications, notifyMentions } from '@/lib/notify'
 import { isFullEditor, type Role } from '@/lib/rbac'
 import { editableTeams, canEditTeam } from '@/lib/scope'
 
@@ -34,5 +34,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     kind: 'comment',
     actorId: userId,
   })
+  await notifyMentions(body, '/collaboration', `${collab.fromTeam}→${collab.toTeam} 협업 댓글`, userId)
   return NextResponse.json(comment, { status: 201 })
 }

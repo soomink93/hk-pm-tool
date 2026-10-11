@@ -180,7 +180,7 @@ function CollabCard({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addComment()}
-              placeholder="댓글 입력…"
+              placeholder="댓글 (@이름 멘션)"
             />
             <Button onClick={addComment} disabled={busy || !comment.trim()}>
               <Send size={13} />
