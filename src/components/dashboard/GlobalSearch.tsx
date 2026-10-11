@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, X, LayoutDashboard, CheckSquare, TriangleAlert, Users, Loader2 } from 'lucide-react'
+import { Search, X, LayoutDashboard, CheckSquare, TriangleAlert, Users, Loader2, FolderKanban } from 'lucide-react'
 
 type Hit = { type: string; typeLabel: string; id: string; title: string; subtitle: string; href: string }
 
 const ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   team: LayoutDashboard,
+  project: FolderKanban,
   decision: CheckSquare,
   escalation: TriangleAlert,
   user: Users,
@@ -79,7 +80,7 @@ export function GlobalSearch() {
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => q.trim() && setOpen(true)}
           onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-          placeholder="검색 (팀·결정·결정 요청·사용자…)"
+          placeholder="검색 (프로젝트·팀·결정·결정 요청…)"
           className="w-full bg-transparent text-[13px] text-white outline-none placeholder:text-white/60"
         />
         {loading && <Loader2 size={14} className="shrink-0 animate-spin text-white/70" />}

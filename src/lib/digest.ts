@@ -18,6 +18,7 @@ export type WeeklyDigest = {
     overdue: { title: string; team: string; assignee: string; dueDate: string }[]
   }
   collaborations: { newCount: number; doneCount: number; pending: number }
+  projects: { name: string; done: number; total: number }[]
 }
 
 const dstr = (d: Date) => d.toISOString().slice(0, 10)
@@ -60,6 +61,13 @@ export async function buildWeeklyDigest(): Promise<WeeklyDigest> {
   const collabDone = collabs.filter((c) => c.status === 'done' && c.updatedAt >= d7).length
   const collabPending = collabs.filter((c) => ['requested', 'accepted', 'in_progress'].includes(c.status)).length
 
+  // 진행 중 프로젝트
+  const activeProjects = await prisma.project.findMany({ where: { status: 'active' }, orderBy: { createdAt: 'desc' } })
+  const projects = activeProjects.map((p) => {
+    const pt = tasks.filter((t) => t.projectId === p.id)
+    return { name: p.name, done: pt.filter((t) => t.status === 'done').length, total: pt.length }
+  })
+
   return {
     rangeLabel: `${dstr(d7)} ~ ${today}`,
     generatedAt: now.toLocaleString('ko-KR'),
@@ -71,6 +79,7 @@ export async function buildWeeklyDigest(): Promise<WeeklyDigest> {
     escalations: { newCount: escNew, resolvedCount: escResolved, open: escOpen },
     tasks: { doneCount: taskDone, overdue },
     collaborations: { newCount: collabNew, doneCount: collabDone, pending: collabPending },
+    projects,
   }
 }
 
@@ -130,6 +139,19 @@ export function renderDigestHtml(d: WeeklyDigest, appUrl = 'https://hk-pm-tool.v
         .join('')
     : `<tr><td colspan="4" style="padding:10px;color:${gray};">지난 주 신규 결정 없음</td></tr>`
 
+  const projRows = d.projects.length
+    ? d.projects
+        .map((p) => {
+          const pct = p.total ? Math.round((p.done / p.total) * 100) : 0
+          return `<tr>
+            <td style="padding:6px 8px;border-bottom:1px solid ${line};font-weight:600;">${esc(p.name)}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid ${line};color:${gray};">${p.done}/${p.total}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid ${line};font-weight:700;color:${navy};">${pct}%</td>
+          </tr>`
+        })
+        .join('')
+    : `<tr><td colspan="3" style="padding:10px;color:${gray};">진행 중 프로젝트 없음</td></tr>`
+
   const th = (t: string) => `<th style="text-align:left;padding:6px 8px;border-bottom:2px solid ${line};font-size:11px;color:${gray};text-transform:uppercase;">${t}</th>`
 
   return `<!doctype html><html lang="ko"><body style="margin:0;background:#f1f5f9;padding:24px;font-family:'Malgun Gothic',Apple SD Gothic Neo,sans-serif;color:#0f172a;">
@@ -159,6 +181,10 @@ export function renderDigestHtml(d: WeeklyDigest, appUrl = 'https://hk-pm-tool.v
       ${card(
         `지난주 결정 (${d.decisions.total}건)`,
         `<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr>${th('날짜')}${th('분류')}${th('내용')}${th('결정자')}</tr></thead><tbody>${decRows}</tbody></table>`,
+      )}
+      ${card(
+        `진행 중 프로젝트 (${d.projects.length}건)`,
+        `<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr>${th('프로젝트')}${th('작업')}${th('진행률')}</tr></thead><tbody>${projRows}</tbody></table>`,
       )}
       ${card(
         '협업',

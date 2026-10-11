@@ -120,6 +120,24 @@ export default async function WeeklyPage() {
       </Card>
 
       <Card>
+        <h2 className="mb-3 text-base font-bold text-navy">진행 중 프로젝트 <span className="text-xs font-normal text-slate-400">({d.projects.length}건)</span></h2>
+        {d.projects.length ? (
+          <div className="space-y-2">
+            {d.projects.map((p, i) => {
+              const pct = p.total ? Math.round((p.done / p.total) * 100) : 0
+              return (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="w-40 shrink-0 truncate text-[13px] font-semibold text-navy">{p.name}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-navy-light" style={{ width: `${pct}%` }} /></div>
+                  <span className="shrink-0 text-[11px] text-slate-400">{p.done}/{p.total} · {pct}%</span>
+                </div>
+              )
+            })}
+          </div>
+        ) : <p className="py-4 text-center text-[13px] text-slate-400">진행 중 프로젝트 없음</p>}
+      </Card>
+
+      <Card>
         <h2 className="mb-2 text-base font-bold text-navy">협업</h2>
         <p className="text-[13px] text-slate-600">
           신규 <b className="text-navy">{d.collaborations.newCount}</b>건 · 완료 <b className="text-[#548235]">{d.collaborations.doneCount}</b>건 · 진행 중 <b className="text-navy">{d.collaborations.pending}</b>건

@@ -35,6 +35,22 @@ export async function GET(req: Request) {
       href: '/overview',
     })
 
+  // 프로젝트 (전 역할)
+  const projects = await prisma.project.findMany({
+    where: { OR: [{ name: like }, { ownerName: like }] },
+    take: TAKE,
+    orderBy: { createdAt: 'desc' },
+  })
+  for (const p of projects)
+    results.push({
+      type: 'project',
+      typeLabel: '프로젝트',
+      id: p.id,
+      title: p.name,
+      subtitle: `담당 ${p.ownerName || '미지정'}${p.dueDate ? ` · 마감 ${p.dueDate}` : ''}`,
+      href: `/projects/${p.id}`,
+    })
+
   // 결정 (열람 권한 있는 역할만)
   if (can(role, 'decision:view')) {
     const decisions = await prisma.decision.findMany({
