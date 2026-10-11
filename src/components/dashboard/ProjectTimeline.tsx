@@ -1,55 +1,78 @@
-// 프로젝트 작업을 마감일 기준으로 가로 타임라인에 배치. 오늘선·상태색·지연 강조.
+// 프로젝트 작업을 생성~마감 기간 막대로 배치. 월 눈금 + 오늘선 + 상태색 + 지연 강조.
 const COLOR: Record<string, string> = { todo: '#94A3B8', in_progress: '#E0A106', done: '#2E8540' }
-const days = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000)
+const DAY = 86_400_000
+const ts = (s: string) => Date.parse(s)
 
-function Legend({ c, t }: { c: string; t: string }) {
-  return <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: c }} />{t}</span>
-}
-
-export function ProjectTimeline({ tasks, projectDue }: { tasks: { title: string; dueDate: string; status: string }[]; projectDue?: string }) {
-  const today = new Date().toISOString().slice(0, 10)
-  const dated = tasks.filter((t) => t.dueDate).sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1))
-  if (dated.length === 0)
+export function ProjectTimeline({
+  tasks,
+  projectDue,
+}: {
+  tasks: { title: string; status: string; start: string; dueDate: string }[]
+  projectDue?: string
+}) {
+  const todayTs = Date.parse(new Date().toISOString().slice(0, 10))
+  const rows = tasks.filter((t) => t.dueDate).sort((a, b) => (a.dueDate < b.dueDate ? -1 : 1))
+  const undated = tasks.length - rows.length
+  if (rows.length === 0)
     return <p className="py-6 text-center text-[13px] text-slate-400">마감일이 지정된 작업이 없습니다.</p>
 
-  const marks = [...dated.map((t) => t.dueDate), today, ...(projectDue ? [projectDue] : [])]
-  const min = marks.reduce((a, b) => (a < b ? a : b))
-  const max = marks.reduce((a, b) => (a > b ? a : b))
-  const span = Math.max(1, days(min, max))
-  const pos = (d: string) => Math.min(100, Math.max(0, (days(min, d) / span) * 100))
-  const todayPos = pos(today)
+  const starts = rows.map((t) => (t.start ? ts(t.start) : ts(t.dueDate)))
+  const ends = rows.map((t) => ts(t.dueDate))
+  const min = Math.min(...starts, todayTs, ...(projectDue ? [ts(projectDue)] : [])) - 2 * DAY
+  const max = Math.max(...ends, todayTs, ...(projectDue ? [ts(projectDue)] : [])) + 2 * DAY
+  const span = Math.max(DAY, max - min)
+  const pos = (t: number) => ((t - min) / span) * 100
+  const todayP = pos(todayTs)
+
+  // 월 눈금
+  const ticks: { p: number; label: string }[] = []
+  const d = new Date(min)
+  d.setDate(1)
+  d.setHours(0, 0, 0, 0)
+  while (d.getTime() <= max) {
+    if (d.getTime() >= min) ticks.push({ p: pos(d.getTime()), label: `${d.getMonth() + 1}월` })
+    d.setMonth(d.getMonth() + 1)
+  }
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between text-[11px] text-slate-400">
-        <span>{min}</span>
-        <span className="flex items-center gap-3"><Legend c="#94A3B8" t="할 일" /><Legend c="#E0A106" t="진행 중" /><Legend c="#2E8540" t="완료" /></span>
-        <span>{max}</span>
+      <div className="relative mb-1 h-4">
+        {ticks.map((t, i) => (
+          <span key={i} className="absolute -translate-x-1/2 text-[10px] text-slate-400" style={{ left: `${t.p}%` }}>{t.label}</span>
+        ))}
       </div>
+
       <div className="space-y-1.5">
-        {dated.map((t, i) => {
-          const overdue = t.dueDate < today && t.status !== 'done'
-          const c = overdue ? '#C00000' : COLOR[t.status] ?? '#94A3B8'
-          const p = pos(t.dueDate)
-          const labelLeft = p > 60
+        {rows.map((t, i) => {
+          const s = t.start ? ts(t.start) : ts(t.dueDate)
+          const e = ts(t.dueDate)
+          const overdue = e < todayTs && t.status !== 'done'
+          const color = overdue ? '#C00000' : COLOR[t.status] ?? '#94A3B8'
+          const left = pos(Math.min(s, e))
+          const width = Math.max(2, pos(Math.max(s, e)) - left)
           return (
-            <div key={i} className="flex items-center gap-3">
+            <div key={i} className="flex items-center gap-2">
               <span className="w-28 shrink-0 truncate text-[12px] text-slate-600" title={t.title}>{t.title}</span>
-              <div className="relative h-6 flex-1 rounded bg-slate-50">
-                <div className="absolute inset-y-0 w-px bg-navy-light/40" style={{ left: `${todayPos}%` }} title={`오늘 ${today}`} />
-                <span className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white" style={{ left: `${p}%`, background: c }} />
-                <span
-                  className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-semibold"
-                  style={labelLeft ? { right: `calc(${100 - p}% + 8px)`, color: c } : { left: `calc(${p}% + 8px)`, color: c }}
-                >
-                  {t.dueDate.slice(5)}{overdue ? ' 지연' : ''}
-                </span>
+              <div className="relative h-5 flex-1 rounded bg-slate-50">
+                {ticks.map((tk, j) => (
+                  <span key={j} className="absolute inset-y-0 w-px bg-slate-200" style={{ left: `${tk.p}%` }} />
+                ))}
+                <span className="absolute inset-y-0 z-10 w-0.5 bg-navy-light" style={{ left: `${todayP}%` }} title="오늘" />
+                <span className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2 rounded-full" style={{ left: `${left}%`, width: `${width}%`, background: color }} title={`${t.start || '?'} → ${t.dueDate}`} />
               </div>
+              <span className="w-12 shrink-0 text-right text-[10px] font-semibold" style={{ color }}>{overdue ? '지연' : t.dueDate.slice(5)}</span>
             </div>
           )
         })}
       </div>
-      <div className="mt-2 text-[10px] text-slate-400">│ 세로선 = 오늘({today.slice(5)})</div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400">
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: '#94A3B8' }} />할 일</span>
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: '#E0A106' }} />진행 중</span>
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: '#2E8540' }} />완료</span>
+        <span className="inline-flex items-center gap-1"><span className="h-3 w-0.5 bg-navy-light" />오늘</span>
+        {undated > 0 && <span className="ml-auto">마감 미정 {undated}건</span>}
+      </div>
     </div>
   )
 }

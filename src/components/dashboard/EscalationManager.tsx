@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { isUrgent } from '@/lib/helpers'
 import { canDecideTier, TIER_DECIDER_LABEL, type Role } from '@/lib/rbac'
+import { ItemHistory } from './ItemHistory'
 
 export type EscDecision = { content: string; decider: string; date: string }
 export type Escalation = {
@@ -155,6 +156,7 @@ export function EscalationManager({
                     <td className="py-2.5 font-semibold">
                       {e.item}
                       {e.projectName && <span className="ml-1.5 inline-flex align-middle"><Badge tone="blue">{e.projectName}</Badge></span>}
+                      <ItemHistory entity="escalation" id={e.id} />
                     </td>
                     <td className="py-2.5"><Badge tone="blue">{e.tier}</Badge></td>
                     <td className="py-2.5">{e.dept}</td>

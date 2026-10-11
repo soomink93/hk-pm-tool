@@ -8,6 +8,7 @@ import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { TASK_STATUS_LABEL, TASK_COLUMNS, PRIO_LABEL } from '@/lib/constants'
 import { TaskComments, type TaskComment } from './TaskComments'
+import { ItemHistory } from './ItemHistory'
 
 export type MyTask = {
   id: string
@@ -124,6 +125,7 @@ export function MyTasks({ tasks }: { tasks: MyTask[] }) {
                       </select>
                       </div>
                       <TaskComments taskId={t.id} comments={t.comments} canComment />
+                      <ItemHistory entity="task" id={t.id} />
                     </div>
                   )
                 })}

@@ -104,7 +104,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <h2 className="text-sm font-bold text-navy">타임라인</h2>
         <Card>
           <ProjectTimeline
-            tasks={tasks.map((t) => ({ title: t.title, dueDate: t.dueDate, status: t.status }))}
+            tasks={tasks.map((t) => ({ title: t.title, dueDate: t.dueDate, status: t.status, start: t.createdAt.toISOString().slice(0, 10) }))}
             projectDue={project.dueDate || undefined}
           />
         </Card>

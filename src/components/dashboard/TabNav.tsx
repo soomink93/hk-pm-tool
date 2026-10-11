@@ -13,6 +13,7 @@ import {
   ListChecks,
   Mail,
   FolderKanban,
+  Gauge,
 } from 'lucide-react'
 import { TABS } from '@/lib/constants'
 import type { Role } from '@/lib/rbac'
@@ -20,6 +21,7 @@ import type { Role } from '@/lib/rbac'
 const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   overview: LayoutDashboard,
   projects: FolderKanban,
+  workload: Gauge,
   weekly: Mail,
   'my-tasks': ListChecks,
   collaboration: Handshake,

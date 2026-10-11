@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Pencil, X } from 'lucide-react'
+import { ItemHistory } from './ItemHistory'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -166,6 +167,7 @@ export function DecisionsManager({
                         <Badge tone="blue">↩ 결정 요청</Badge>
                       </Link>
                     )}
+                    <ItemHistory entity="decision" id={d.id} />
                   </td>
                   <td className="py-2.5"><Badge tone="blue">{d.tier}</Badge></td>
                   <td className="py-2.5">{d.decider}</td>

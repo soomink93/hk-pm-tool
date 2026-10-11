@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
 import { TASK_STATUS_LABEL, TASK_COLUMNS, PRIO_LABEL } from '@/lib/constants'
 import { TaskComments, type TaskComment } from './TaskComments'
+import { ItemHistory } from './ItemHistory'
 
 export type Task = {
   id: string
@@ -225,6 +226,7 @@ export function TaskBoard({
                         </div>
                       )}
                       <TaskComments taskId={t.id} comments={t.comments} canComment={canEditT(t.team) || t.assigneeId === currentUserId} />
+                      <ItemHistory entity="task" id={t.id} />
                     </Card>
                   )
                 })}
