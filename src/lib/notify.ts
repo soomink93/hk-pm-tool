@@ -161,22 +161,31 @@ async function escalationDeciderIds(dept: string, tier: string): Promise<string[
   return [...new Set([...tierIds, ...adminIds])]
 }
 
-// 결정 요청 등록 시 해당 부문·단계의 결정권자에게만 알림
-export async function notifyEscalationCreated(opts: { item: string; dept: string; needed: string; tier: string; deadline?: string }, actorId?: string) {
+type EscOpts = { item: string; dept: string; needed: string; tier: string; deadline?: string }
+
+// 해당 부문·단계의 결정권자에게 알림 (등록 / 상신 공용)
+async function notifyEscalationDeciders(opts: EscOpts, variant: 'created' | 'raised', actorId?: string) {
   const deciderIds = await escalationDeciderIds(opts.dept, opts.tier)
+  const raised = variant === 'raised'
   await notifyUsers(
     deciderIds,
     {
       kind: 'escalation',
-      content: `[${opts.tier}] 결정 요청: ${opts.item} (${opts.dept})`,
+      content: `[${opts.tier}${raised ? ' 상신' : ''}] 결정 요청: ${opts.item} (${opts.dept})`,
       href: '/escalation',
       fromTeam: opts.dept,
       email: {
-        subject: `[HK] 결정 요청(${opts.tier}): ${opts.item}`,
-        title: '새 결정 요청이 올라왔습니다',
+        subject: `[HK] 결정 요청${raised ? ` ${opts.tier} 상신` : `(${opts.tier})`}: ${opts.item}`,
+        title: raised ? `결정 요청이 ${opts.tier}로 상신되었습니다` : '새 결정 요청이 올라왔습니다',
         lines: [`항목: ${opts.item}`, `요청 부서: ${opts.dept}`, `필요 결정: ${opts.needed}`, `단계: ${opts.tier}`, opts.deadline ? `기한: ${opts.deadline}` : '기한: 미지정'],
       },
     },
     actorId,
   )
 }
+
+// 결정 요청 등록 시 해당 부문·단계의 결정권자에게만 알림
+export const notifyEscalationCreated = (opts: EscOpts, actorId?: string) => notifyEscalationDeciders(opts, 'created', actorId)
+
+// 단계 상향(상신) 시 새 단계의 결정권자에게 알림
+export const notifyEscalationRaised = (opts: EscOpts, actorId?: string) => notifyEscalationDeciders(opts, 'raised', actorId)

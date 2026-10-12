@@ -3,7 +3,8 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
-import { canDecideTier, TIER_DECIDER_LABEL, type Role } from '@/lib/rbac'
+import { canDecideTier, TIER_DECIDER_LABEL, TIER_RANK, type Role } from '@/lib/rbac'
+import { notifyEscalationRaised } from '@/lib/notify'
 import { logAudit } from '@/lib/audit'
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -42,6 +43,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     },
   })
   await logAudit(g.session, 'update', 'escalation', id, `결정 요청 수정: ${updated.item} (${newStatus})`)
+
+  // 단계 상향(상신) → 새 단계 결정권자에게 알림 (완료가 아닐 때만)
+  const raised = (TIER_RANK[updated.tier] ?? 0) > (TIER_RANK[esc.tier] ?? 0)
+  if (raised && !becameDone) {
+    await notifyEscalationRaised(
+      { item: updated.item, dept: updated.dept, needed: updated.needed, tier: updated.tier, deadline: updated.deadline },
+      g.session.user.id,
+    )
+  }
 
   // 결정 요청 완료 → 결정 로그 자동 생성 + 링크 (중복 방지)
   if (becameDone) {
