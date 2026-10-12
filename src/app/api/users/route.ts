@@ -4,6 +4,7 @@ import type { Role } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { logAudit } from '@/lib/audit'
+import { ensureTeam } from '@/lib/ensureTeam'
 
 const ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
 
@@ -44,5 +45,7 @@ export async function POST(req: Request) {
     select: { id: true, name: true, email: true, role: true, team: true, department: true },
   })
   await logAudit(g.session, 'create', 'user', user.id, `사용자 추가: ${user.name} (${user.email}, ${user.role})`)
+  const newTeamId = await ensureTeam(user.team, user.department, user.role === 'teamlead' ? user.name : '')
+  if (newTeamId) await logAudit(g.session, 'create', 'team', newTeamId, `팀 자동 생성: ${user.team} (사용자 추가 시)`)
   return NextResponse.json(user, { status: 201 })
 }

@@ -4,6 +4,7 @@ import type { Prisma, Role } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { logAudit } from '@/lib/audit'
+import { ensureTeam } from '@/lib/ensureTeam'
 
 const ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
 
@@ -42,6 +43,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     select: { id: true, name: true, email: true, role: true, team: true, department: true },
   })
   await logAudit(g.session, 'update', 'user', id, `사용자 수정: ${updated.name}`)
+  const newTeamId = await ensureTeam(updated.team, updated.department, updated.role === 'teamlead' ? updated.name : '')
+  if (newTeamId) await logAudit(g.session, 'create', 'team', newTeamId, `팀 자동 생성: ${updated.team} (사용자 수정 시)`)
   return NextResponse.json(updated)
 }
 
