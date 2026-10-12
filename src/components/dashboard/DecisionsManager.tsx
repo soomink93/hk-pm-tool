@@ -33,7 +33,7 @@ const CATEGORY_TONE: Record<string, 'blue' | 'green' | 'yellow' | 'red' | 'gray'
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
-const emptyForm = (projectId = '') => ({ date: today(), content: '', category: '기타', tier: '2단계', decider: '', priority: 'mid', status: '완료', projectId })
+const emptyForm = (projectId = '') => ({ date: today(), content: '', category: '기타', tier: '2단계', decider: '', priority: 'mid', projectId })
 
 export function DecisionsManager({
   decisions,
@@ -73,7 +73,7 @@ export function DecisionsManager({
   }
   function openEdit(d: Decision) {
     setEditId(d.id)
-    setForm({ date: d.date, content: d.content, category: d.category, tier: d.tier, decider: d.decider, priority: d.priority, status: d.status })
+    setForm({ date: d.date, content: d.content, category: d.category, tier: d.tier, decider: d.decider, priority: d.priority })
     setOpen(true)
   }
   async function save() {
@@ -102,7 +102,7 @@ export function DecisionsManager({
         <h1 className="text-base font-bold text-navy">결정 로그</h1>
         {canAdd && (
           <Button onClick={openAdd}>
-            <Plus size={14} /> 결정 추가
+            <Plus size={14} /> 결정 기록
           </Button>
         )}
       </div>
@@ -150,7 +150,6 @@ export function DecisionsManager({
                 <th className="py-2.5">단계</th>
                 <th className="py-2.5">결정자</th>
                 <th className="py-2.5">우선순위</th>
-                <th className="py-2.5">상태</th>
                 <th className="py-2.5" />
               </tr>
             </thead>
@@ -175,9 +174,6 @@ export function DecisionsManager({
                     {PRIO_LABEL[d.priority as keyof typeof PRIO_LABEL] ?? d.priority}
                   </td>
                   <td className="py-2.5">
-                    <Badge tone={d.status === '완료' ? 'green' : 'yellow'}>{d.status}</Badge>
-                  </td>
-                  <td className="py-2.5">
                     {canEditRow(d) && (
                       <div className="flex gap-1">
                         <button onClick={() => openEdit(d)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
@@ -197,7 +193,7 @@ export function DecisionsManager({
         )}
       </Card>
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editId ? '결정 수정' : '결정 추가'}>
+      <Modal open={open} onClose={() => setOpen(false)} title={editId ? '결정 수정' : '결정 기록'}>
         <Field label="날짜">
           <input type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
         </Field>
@@ -225,11 +221,6 @@ export function DecisionsManager({
         <Field label="우선순위">
           <select className={inputClass} value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
             <option value="high">높음</option><option value="mid">중간</option><option value="low">낮음</option>
-          </select>
-        </Field>
-        <Field label="상태">
-          <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-            <option>완료</option><option>보류</option>
           </select>
         </Field>
         <div className="mt-5 flex justify-end gap-2">

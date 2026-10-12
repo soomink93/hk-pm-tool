@@ -1,5 +1,22 @@
 import { describe, it, expect } from 'vitest'
-import { can, visibleTabs, canEditProject } from './rbac'
+import { can, visibleTabs, canEditProject, canDecideTier } from './rbac'
+
+describe('canDecideTier', () => {
+  it('회장·사장은 3단계만 결정, 1·2단계는 불가', () => {
+    for (const r of ['chairman', 'president'] as const) {
+      expect(canDecideTier(r, '1단계')).toBe(false)
+      expect(canDecideTier(r, '2단계')).toBe(false)
+      expect(canDecideTier(r, '3단계')).toBe(true)
+    }
+  })
+  it('팀장 1단계, 임원 1·2단계, admin 전부', () => {
+    expect(canDecideTier('teamlead', '1단계')).toBe(true)
+    expect(canDecideTier('teamlead', '2단계')).toBe(false)
+    expect(canDecideTier('executive', '2단계')).toBe(true)
+    expect(canDecideTier('executive', '3단계')).toBe(false)
+    expect(canDecideTier('admin', '3단계')).toBe(true)
+  })
+})
 
 describe('can', () => {
   it('decision:write full editors + executive; teamlead cannot', () => {

@@ -33,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       tier: String(b.tier ?? ''),
       decider: String(b.decider ?? ''),
       priority: String(b.priority ?? 'mid'),
-      status: String(b.status ?? '완료'),
+      status: '완료', // 결정 로그는 저장소 — 항상 완료
     },
   })
   await logAudit(g.session, 'update', 'decision', id, `결정 수정: ${updated.content}`)

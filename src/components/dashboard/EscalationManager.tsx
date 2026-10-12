@@ -227,7 +227,7 @@ export function EscalationManager({
             <option>1단계</option><option>2단계</option><option>3단계</option>
           </select>
           <p className="mt-1 text-[11px] text-slate-400">
-            {form.tier} → <b className="text-slate-500">{TIER_DECIDER_LABEL[form.tier] ?? '상위 결정권자'}</b>가 결정
+            {form.tier} → <b className="text-slate-500">{TIER_DECIDER_LABEL[form.tier] ?? '상위 결정권자'}</b>이 결정
           </p>
         </Field>
         <Field label="요청 부서">

@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       tier: String(b.tier ?? ''),
       decider: String(b.decider ?? ''),
       priority: String(b.priority ?? 'mid'),
-      status: String(b.status ?? '완료'),
+      status: '완료', // 결정 로그는 이미 내려진 결정의 저장소 — 항상 완료
       createdById: userId,
       createdByName: name ?? '',
     },
