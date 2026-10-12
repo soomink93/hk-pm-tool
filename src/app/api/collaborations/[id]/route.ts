@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import type { CollabStatus } from '@prisma/client'
+import { Prisma, type CollabStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { createCollabNotifications, notifyTaskAssigned } from '@/lib/notify'
@@ -60,24 +60,29 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           assigneeId = u.id
         }
       }
-      await prisma.task.create({
-        data: {
-          title: collab.content,
-          description: `${collab.fromTeam} 협업 요청`,
-          team: collab.toTeam,
-          assignee,
-          assigneeId,
-          dueDate: b.dueDate ? String(b.dueDate) : '',
-          status: 'todo',
-          priority: 'mid',
-          collaborationId: id,
-          projectId: collab.projectId,
-          createdById: userId,
-          createdByName: name ?? '',
-        },
-      })
-      if (assigneeId)
-        await notifyTaskAssigned({ assigneeId, title: collab.content, team: collab.toTeam, dueDate: b.dueDate ? String(b.dueDate) : '' }, userId)
+      try {
+        await prisma.task.create({
+          data: {
+            title: collab.content,
+            description: `${collab.fromTeam} 협업 요청`,
+            team: collab.toTeam,
+            assignee,
+            assigneeId,
+            dueDate: b.dueDate ? String(b.dueDate) : '',
+            status: 'todo',
+            priority: 'mid',
+            collaborationId: id,
+            projectId: collab.projectId,
+            createdById: userId,
+            createdByName: name ?? '',
+          },
+        })
+        if (assigneeId)
+          await notifyTaskAssigned({ assigneeId, title: collab.content, team: collab.toTeam, dueDate: b.dueDate ? String(b.dueDate) : '' }, userId)
+      } catch (e) {
+        // 동시 수락으로 이미 작업이 생성됨(collaborationId unique) → 무시
+        if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002')) throw e
+      }
     }
   }
 

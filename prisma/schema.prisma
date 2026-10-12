@@ -147,7 +147,7 @@ model Task {
   updatedAt     DateTime   @updatedAt
 
   @@index([team, status])
-  @@index([collaborationId])
+  @@unique([collaborationId])
   @@index([assigneeId])
   @@index([projectId])
 }
@@ -185,7 +185,7 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
-  @@index([entity])
+  @@index([entity, entityId])
 }
 
 model CollaborationComment {

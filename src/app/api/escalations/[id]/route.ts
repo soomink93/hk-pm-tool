@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
@@ -46,21 +47,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (becameDone) {
     const exists = await prisma.decision.findFirst({ where: { escalationId: id } })
     if (!exists) {
-      const dec = await prisma.decision.create({
-        data: {
-          date: new Date().toISOString().slice(0, 10),
-          content: `${updated.item} — ${updated.needed}`,
-          tier: updated.tier,
-          decider: g.session.user.name ?? '',
-          priority: 'high',
-          status: '완료',
-          createdById: g.session.user.id,
-          createdByName: g.session.user.name ?? '',
-          escalationId: id,
-          projectId: updated.projectId,
-        },
-      })
-      await logAudit(g.session, 'create', 'decision', dec.id, `결정 요청 완료로 결정 자동 기록: ${updated.item}`)
+      try {
+        const dec = await prisma.decision.create({
+          data: {
+            date: new Date().toISOString().slice(0, 10),
+            content: `${updated.item} — ${updated.needed}`,
+            tier: updated.tier,
+            decider: g.session.user.name ?? '',
+            priority: 'high',
+            status: '완료',
+            createdById: g.session.user.id,
+            createdByName: g.session.user.name ?? '',
+            escalationId: id,
+            projectId: updated.projectId,
+          },
+        })
+        await logAudit(g.session, 'create', 'decision', dec.id, `결정 요청 완료로 결정 자동 기록: ${updated.item}`)
+      } catch (e) {
+        // 동시 완료로 이미 결정이 생성됨(escalationId unique) → 무시
+        if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002')) throw e
+      }
     }
   }
   return NextResponse.json(updated)
