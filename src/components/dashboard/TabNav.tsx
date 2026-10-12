@@ -15,6 +15,7 @@ import {
   FolderKanban,
   Gauge,
   GanttChartSquare,
+  Inbox,
 } from 'lucide-react'
 import { TABS } from '@/lib/constants'
 import type { Role } from '@/lib/rbac'
@@ -30,6 +31,7 @@ const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   tasks: KanbanSquare,
   decisions: CheckSquare,
   escalation: TriangleAlert,
+  requests: Inbox,
   audit: History,
   settings: Settings,
 }

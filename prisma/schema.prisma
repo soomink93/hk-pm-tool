@@ -111,6 +111,20 @@ model Notification {
   @@index([recipientUserId, read])
 }
 
+// 사용자 → 관리자 요청/건의함
+model AdminRequest {
+  id            String   @id @default(cuid())
+  content       String
+  status        String   @default("대기중") // 대기중 | 처리완료
+  reply         String?
+  createdById   String
+  createdByName String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([createdById])
+}
+
 enum CollabStatus {
   requested
   accepted

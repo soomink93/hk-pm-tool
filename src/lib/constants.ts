@@ -62,6 +62,7 @@ export const TABS = [
   { id: 'tasks', label: '작업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'escalation', label: '결정 요청', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'president', 'executive'] },
+  { id: 'requests', label: '관리자 요청', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'audit', label: '변경 이력', roles: ['admin'] },
   { id: 'settings', label: '설정', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
 ] as const

@@ -184,6 +184,43 @@ async function notifyEscalationDeciders(opts: EscOpts, variant: 'created' | 'rai
   )
 }
 
+// 관리자 요청 등록 → 모든 관리자에게 알림
+export async function notifyAdminRequest(opts: { content: string; byName: string }, actorId?: string) {
+  const admins = await prisma.user.findMany({ where: { role: 'admin' }, select: { id: true } })
+  await notifyUsers(
+    admins.map((a) => a.id),
+    {
+      kind: 'admin_request',
+      content: `관리자 요청 (${opts.byName}): ${opts.content.slice(0, 60)}`,
+      href: '/requests',
+      email: {
+        subject: `[HK] 관리자 요청: ${opts.byName}`,
+        title: '새 관리자 요청이 등록되었습니다',
+        lines: [`작성자: ${opts.byName}`, opts.content],
+      },
+    },
+    actorId,
+  )
+}
+
+// 관리자 요청 처리완료 → 작성자에게 알림
+export async function notifyAdminRequestHandled(opts: { requesterId: string; content: string; reply?: string }, actorId?: string) {
+  await notifyUsers(
+    [opts.requesterId],
+    {
+      kind: 'admin_request',
+      content: `요청이 처리되었습니다: ${opts.content.slice(0, 60)}`,
+      href: '/requests',
+      email: {
+        subject: '[HK] 관리자 요청 처리 완료',
+        title: '요청이 처리되었습니다',
+        lines: [`요청: ${opts.content}`, opts.reply ? `답변: ${opts.reply}` : '답변: (없음)'],
+      },
+    },
+    actorId,
+  )
+}
+
 // 결정 요청 등록 시 해당 부문·단계의 결정권자에게만 알림
 export const notifyEscalationCreated = (opts: EscOpts, actorId?: string) => notifyEscalationDeciders(opts, 'created', actorId)
 
