@@ -5,6 +5,8 @@ import { canEditCalendar } from '@/lib/rbac'
 import { logAudit } from '@/lib/audit'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+const HEX_RE = /^#[0-9A-Fa-f]{6}$/
+const normColor = (c: unknown) => (typeof c === 'string' && HEX_RE.test(c) ? c : '#2E78D2')
 
 // 모든 사용자 열람
 export async function GET() {
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
   if (!title) return NextResponse.json({ error: '제목을 입력하세요.' }, { status: 400 })
 
   const created = await prisma.calendarEvent.create({
-    data: { date, title, memo: b.memo ? String(b.memo) : null, createdById: id, createdByName: name ?? '' },
+    data: { date, title, memo: b.memo ? String(b.memo) : null, color: normColor(b.color), createdById: id, createdByName: name ?? '' },
   })
   await logAudit(g.session, 'create', 'calendar', created.id, `일정 추가: ${date} ${title}`)
   return NextResponse.json(created, { status: 201 })

@@ -117,6 +117,7 @@ model CalendarEvent {
   date          String   // YYYY-MM-DD
   title         String
   memo          String?
+  color         String   @default("#2E78D2") // 이벤트 색상(hex)
   createdById   String
   createdByName String
   createdAt     DateTime @default(now())
