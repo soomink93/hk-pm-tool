@@ -111,6 +111,19 @@ model Notification {
   @@index([recipientUserId, read])
 }
 
+// 캘린더 일정/이벤트 (편집: 관리자 + 신동준 이사)
+model CalendarEvent {
+  id            String   @id @default(cuid())
+  date          String   // YYYY-MM-DD
+  title         String
+  memo          String?
+  createdById   String
+  createdByName String
+  createdAt     DateTime @default(now())
+
+  @@index([date])
+}
+
 // 사용자 → 관리자 요청/건의함
 model AdminRequest {
   id            String   @id @default(cuid())

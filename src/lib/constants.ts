@@ -52,6 +52,7 @@ export const TASK_STATUS_LABEL: Record<string, string> = {
 export const TASK_COLUMNS = ['todo', 'in_progress', 'done'] as const
 
 export const TABS = [
+  { id: 'calendar', label: '캘린더', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'projects', label: '프로젝트', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'roadmap', label: '로드맵', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },

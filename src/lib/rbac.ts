@@ -50,3 +50,8 @@ export const visibleTabs = (role: Role): string[] =>
 // 프로젝트 수정·삭제 권한: 전체 편집자이거나 본인이 담당자(owner)
 export const canEditProject = (role: Role, ownerId: string | null, userId: string): boolean =>
   isFullEditor(role) || (!!ownerId && ownerId === userId)
+
+// 캘린더 편집 권한: 관리자 + 신동준 이사만
+export const CALENDAR_EDITOR_EMAIL = 'djshin@hk-global.com'
+export const canEditCalendar = (role: Role, email?: string | null, name?: string | null): boolean =>
+  role === 'admin' || email === CALENDAR_EDITOR_EMAIL || name === '신동준'
