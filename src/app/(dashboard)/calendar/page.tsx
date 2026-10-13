@@ -14,7 +14,7 @@ export default async function CalendarPage() {
 
   return (
     <CalendarView
-      events={events.map((e) => ({ id: e.id, date: e.date, title: e.title, memo: e.memo, color: e.color }))}
+      events={events.map((e) => ({ id: e.id, date: e.date, endDate: e.endDate, title: e.title, memo: e.memo, color: e.color }))}
       canEdit={canEdit}
     />
   )

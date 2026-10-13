@@ -28,9 +28,10 @@ export async function POST(req: Request) {
   const title = String(b.title ?? '').trim()
   if (!DATE_RE.test(date)) return NextResponse.json({ error: '날짜 형식이 올바르지 않습니다.' }, { status: 400 })
   if (!title) return NextResponse.json({ error: '제목을 입력하세요.' }, { status: 400 })
+  const endDate = b.endDate && DATE_RE.test(String(b.endDate)) && String(b.endDate) > date ? String(b.endDate) : null
 
   const created = await prisma.calendarEvent.create({
-    data: { date, title, memo: b.memo ? String(b.memo) : null, color: normColor(b.color), createdById: id, createdByName: name ?? '' },
+    data: { date, endDate, title, memo: b.memo ? String(b.memo) : null, color: normColor(b.color), createdById: id, createdByName: name ?? '' },
   })
   await logAudit(g.session, 'create', 'calendar', created.id, `일정 추가: ${date} ${title}`)
   return NextResponse.json(created, { status: 201 })

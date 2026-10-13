@@ -24,9 +24,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!title) return NextResponse.json({ error: '제목을 입력하세요.' }, { status: 400 })
 
   const color = typeof b.color === 'string' && HEX_RE.test(b.color) ? b.color : existing.color
+  const endDate =
+    b.endDate === undefined ? existing.endDate
+    : b.endDate && DATE_RE.test(String(b.endDate)) && String(b.endDate) > date ? String(b.endDate)
+    : null
   const updated = await prisma.calendarEvent.update({
     where: { id },
-    data: { date, title, memo: b.memo !== undefined ? (b.memo ? String(b.memo) : null) : existing.memo, color },
+    data: { date, endDate, title, memo: b.memo !== undefined ? (b.memo ? String(b.memo) : null) : existing.memo, color },
   })
   await logAudit(g.session, 'update', 'calendar', id, `일정 수정: ${date} ${title}`)
   return NextResponse.json(updated)

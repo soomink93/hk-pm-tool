@@ -114,7 +114,8 @@ model Notification {
 // 캘린더 일정/이벤트 (편집: 관리자 + 신동준 이사)
 model CalendarEvent {
   id            String   @id @default(cuid())
-  date          String   // YYYY-MM-DD
+  date          String   // 시작일 YYYY-MM-DD
+  endDate       String?  // 종료일 YYYY-MM-DD (없으면 당일)
   title         String
   memo          String?
   color         String   @default("#2E78D2") // 이벤트 색상(hex)

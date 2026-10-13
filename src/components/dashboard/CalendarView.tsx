@@ -6,8 +6,9 @@ import { ChevronLeft, ChevronRight, Plus, X, Check } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
+import { dateRange } from '@/lib/calendar'
 
-export type CalEvent = { id: string; date: string; title: string; memo: string | null; color: string }
+export type CalEvent = { id: string; date: string; endDate: string | null; title: string; memo: string | null; color: string }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const ymd = (y: number, m: number, d: number) =>
@@ -57,13 +58,13 @@ export function CalendarView({ events, canEdit }: { events: CalEvent[]; canEdit:
 
   const [open, setOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState({ date: todayStr, title: '', memo: '', color: DEFAULT_COLOR })
+  const [form, setForm] = useState({ date: todayStr, endDate: '', title: '', memo: '', color: DEFAULT_COLOR })
   const [busy, setBusy] = useState(false)
 
-  // 날짜별 이벤트 묶기
+  // 날짜별 이벤트 묶기 (기간 일정은 모든 날짜에 표시)
   const byDate = useMemo(() => {
     const m: Record<string, CalEvent[]> = {}
-    for (const e of events) (m[e.date] ??= []).push(e)
+    for (const e of events) for (const ds of dateRange(e.date, e.endDate)) (m[ds] ??= []).push(e)
     return m
   }, [events])
 
@@ -90,13 +91,13 @@ export function CalendarView({ events, canEdit }: { events: CalEvent[]; canEdit:
   function openAdd(date: string) {
     if (!canEdit) return
     setEditId(null)
-    setForm({ date, title: '', memo: '', color: DEFAULT_COLOR })
+    setForm({ date, endDate: '', title: '', memo: '', color: DEFAULT_COLOR })
     setOpen(true)
   }
   function openEdit(e: CalEvent) {
     if (!canEdit) return
     setEditId(e.id)
-    setForm({ date: e.date, title: e.title, memo: e.memo ?? '', color: e.color })
+    setForm({ date: e.date, endDate: e.endDate ?? '', title: e.title, memo: e.memo ?? '', color: e.color })
     setOpen(true)
   }
   async function save() {
@@ -190,7 +191,7 @@ export function CalendarView({ events, canEdit }: { events: CalEvent[]; canEdit:
                     <div
                       key={e.id}
                       onClick={(ev) => { ev.stopPropagation(); openEdit(e) }}
-                      title={`${e.title}${e.memo ? ` — ${e.memo}` : ''}`}
+                      title={`${e.title}${e.endDate ? ` (${e.date} ~ ${e.endDate})` : ''}${e.memo ? ` — ${e.memo}` : ''}`}
                       style={{ background: e.color || DEFAULT_COLOR }}
                       className={`truncate rounded px-1.5 py-0.5 text-[13px] font-medium text-white ${canEdit ? 'hover:opacity-85' : ''}`}
                     >
@@ -213,8 +214,11 @@ export function CalendarView({ events, canEdit }: { events: CalEvent[]; canEdit:
       </p>
 
       <Modal open={open} onClose={() => setOpen(false)} title={editId ? '일정 수정' : '일정 추가'}>
-        <Field label="날짜">
+        <Field label="시작일">
           <input type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+        </Field>
+        <Field label="종료일 (선택 · 여러 날 지속 시)">
+          <input type="date" className={inputClass} value={form.endDate} min={form.date} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
         </Field>
         <Field label="제목">
           <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="예: 대체휴일, 회사 전시회" />
