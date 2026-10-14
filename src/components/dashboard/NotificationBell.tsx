@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Handshake, RefreshCw, MessageSquare, KanbanSquare, TriangleAlert, Clock, AtSign, Inbox } from 'lucide-react'
+import { Bell, Handshake, RefreshCw, MessageSquare, KanbanSquare, TriangleAlert, Clock, AtSign, Inbox, CalendarClock, Factory } from 'lucide-react'
 
 type Noti = {
   id: string
@@ -18,6 +18,7 @@ type Noti = {
 const KIND_LABEL: Record<string, string> = {
   request: '협업 요청', status: '상태 변경', comment: '새 댓글',
   task: '작업 배정', escalation: '결정 요청', reminder: '마감 리마인더', mention: '멘션', admin_request: '관리자 요청',
+  order_change: '수주 일정 변경 · 업데이트 필요', order_handoff: '수주 · 착수 가능',
 }
 const KIND_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   request: Handshake,
@@ -28,6 +29,8 @@ const KIND_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   reminder: Clock,
   mention: AtSign,
   admin_request: Inbox,
+  order_change: CalendarClock,
+  order_handoff: Factory,
 }
 const COLLAB_KINDS = ['request', 'status', 'comment']
 

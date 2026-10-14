@@ -23,7 +23,8 @@ export async function PATCH() {
   const g = await guard()
   if (g.res) return g.res
   await prisma.notification.updateMany({
-    where: { recipientUserId: g.session.user.id, read: false },
+    // 수주 '업데이트 필요'는 확인 완료·단계 수정 전까지 유지
+    where: { recipientUserId: g.session.user.id, read: false, kind: { not: 'order_change' } },
     data: { read: true },
   })
   return NextResponse.json({ ok: true })

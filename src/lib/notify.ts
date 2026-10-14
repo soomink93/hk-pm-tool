@@ -72,7 +72,7 @@ export async function notifyMentions(body: string, href: string, context: string
 }
 
 // 특정 팀의 이해관계자: 해당 팀 소속(팀장·팀원) + 그 팀이 속한 부문의 임원
-async function teamStakeholders(teamName: string): Promise<string[]> {
+export async function teamStakeholders(teamName: string): Promise<string[]> {
   const team = await prisma.team.findUnique({ where: { name: teamName }, select: { department: true } })
   const [members, execs] = await Promise.all([
     prisma.user.findMany({ where: { team: teamName }, select: { id: true } }),

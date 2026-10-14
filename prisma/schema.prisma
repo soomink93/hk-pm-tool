@@ -281,3 +281,94 @@ model Brief {
   collaborations Json  @default("[]")
   createdAt   DateTime @default(now())
 }
+
+// ───────── 수주·생산 일정 (hk-order-tracker 이식) ─────────
+// 날짜는 'YYYY-MM-DD' 문자열. 금액은 민감정보라 보관하지 않음.
+
+enum OrderStatus {
+  active
+  hold
+  done
+}
+
+enum ProductType {
+  undecided
+  mass
+  custom
+  oem
+}
+
+enum StageStatus {
+  todo
+  doing
+  done
+  skip
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  orderNo      String      @default("") // 수주번호
+  customer     String // 고객사
+  product      String // 품목
+  quantity     String      @default("")
+  dueDate      String      @default("") // 계약 납기
+  specialTerms String      @default("") // 특약사항
+  notes        String      @default("")
+  productType  ProductType @default(undecided)
+  status       OrderStatus @default(active)
+  completedAt  String? // 수주 완료일 (전 단계 완료 또는 영업이 완료 처리)
+  createdBy    String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  stages Stage[]
+  logs   OrderLog[]
+  files  OrderFile[]
+
+  @@index([status])
+}
+
+model Stage {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  seq       Int
+  name      String
+  team      String // 담당팀 (Team.name)
+  assignee  String      @default("")
+  start     String
+  end       String
+  baseStart String // 최초 계획 (지연 비교용)
+  baseEnd   String
+  status    StageStatus @default(todo)
+  startedAt String? // 실제 착수일 (상태 → 진행)
+  doneAt    String? // 실제 완료일 (상태 → 완료)
+
+  @@unique([orderId, seq])
+}
+
+// 댓글 + 변경이력 + 인계 한 타임라인 (kind: comment | change | handoff)
+model OrderLog {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind      String
+  text      String
+  actor     String
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// ponytail: 첨부를 DB bytea에 저장 — 파일당 4MB(Vercel 요청 한도) 이하 전제. 커지면 Supabase Storage로.
+model OrderFile {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  name       String
+  mime       String
+  size       Int
+  data       Bytes
+  uploadedBy String
+  createdAt  DateTime @default(now())
+}

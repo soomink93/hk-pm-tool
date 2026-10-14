@@ -56,6 +56,7 @@ export const TABS = [
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'projects', label: '프로젝트', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'roadmap', label: '로드맵', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'orders', label: '수주·생산', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'workload', label: '업무량', roles: ['admin', 'chairman', 'president', 'executive'] },
   { id: 'weekly', label: '주간 요약', roles: ['admin', 'chairman', 'president'] },
   { id: 'my-tasks', label: '내 작업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },

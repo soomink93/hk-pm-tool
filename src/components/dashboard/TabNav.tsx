@@ -15,6 +15,7 @@ import {
   FolderKanban,
   Gauge,
   GanttChartSquare,
+  Factory,
   Inbox,
   CalendarDays,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   overview: LayoutDashboard,
   projects: FolderKanban,
   roadmap: GanttChartSquare,
+  orders: Factory,
   workload: Gauge,
   weekly: Mail,
   'my-tasks': ListChecks,
