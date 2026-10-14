@@ -51,12 +51,16 @@ export const TASK_STATUS_LABEL: Record<string, string> = {
 }
 export const TASK_COLUMNS = ['todo', 'in_progress', 'done'] as const
 
+// 수주·생산 탭 공개 여부. false = 개발 중(관리자만 보임·알림도 관리자만). 개발 완료 후 true로 바꾸면 전 직원 공개
+export const ORDERS_RELEASED = false
+const ALL_ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
+
 export const TABS = [
   { id: 'calendar', label: '캘린더', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'projects', label: '프로젝트', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'roadmap', label: '로드맵', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
-  { id: 'orders', label: '수주·생산', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'orders', label: '수주·생산', roles: ORDERS_RELEASED ? ALL_ROLES : ['admin'] },
   { id: 'workload', label: '업무량', roles: ['admin', 'chairman', 'president', 'executive'] },
   { id: 'weekly', label: '주간 요약', roles: ['admin', 'chairman', 'president'] },
   { id: 'my-tasks', label: '내 작업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },

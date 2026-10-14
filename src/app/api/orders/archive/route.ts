@@ -1,11 +1,14 @@
 import { auth } from '@/lib/auth'
+import { canSeeOrders } from '@/lib/orders/perm'
 import { prisma } from '@/lib/prisma'
 import { orderRecord, toCsv } from '@/lib/orders/archive'
 import { FLOWS, FLOW_LABEL, type Flow } from '@/lib/orders/stages'
 
 // 완료 기록 CSV (엑셀에서 바로 열림). kind=orders: 수주 1행, kind=stages: 단계 1행(분석용)
 export async function GET(req: Request) {
-  if (!(await auth())?.user) return new Response('인증이 필요합니다.', { status: 401 })
+  const session = await auth()
+  if (!session?.user) return new Response('인증이 필요합니다.', { status: 401 })
+  if (!canSeeOrders(session.user.role)) return new Response('Not found', { status: 404 }) // 공개 전에는 관리자만
   const sp = new URL(req.url).searchParams
   const type = sp.get('type') && sp.get('type')! in FLOWS ? (sp.get('type') as Flow) : undefined
   const year = /^\d{4}$/.test(sp.get('year') ?? '') ? sp.get('year')! : undefined

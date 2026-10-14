@@ -1,5 +1,6 @@
 // 수주 일정 권한 — hk-pm-tool 역할(rbac)·부문(department)·팀 기준
 import { isFullEditor, type Role } from '../rbac'
+import { ORDERS_RELEASED } from '../constants'
 
 export const SALES_DEPT = '국내영업' // 수주 등록·전체 일정 조정
 export const DESIGN_DEPT = '기술연구소' // 제품 구분(양산/커스텀/OEM) 판정
@@ -25,3 +26,6 @@ export const canSetType = (u: OrderUser, depts: TeamDepts) => isSales(u, depts) 
 
 // 완료(보관)된 수주 수정 = 관리자·회장·사장만
 export const canEditLocked = (u: OrderUser) => isFullEditor(u.role)
+
+// 수주·생산 접근: 공개 전(ORDERS_RELEASED=false)에는 관리자만
+export const canSeeOrders = (role: Role) => ORDERS_RELEASED || role === 'admin'

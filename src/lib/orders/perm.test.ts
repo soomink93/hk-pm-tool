@@ -32,3 +32,12 @@ test('type change: sales + 기술연구소; locked edit: full editors only', () 
   expect(canEditLocked(u('chairman', null))).toBe(true)
   expect(canEditLocked(u('teamlead', '국내영업팀'))).toBe(false)
 })
+
+test('orders visibility: admin always, others only after release', async () => {
+  const { canSeeOrders } = await import('./perm')
+  const { ORDERS_RELEASED, TABS } = await import('../constants')
+  expect(canSeeOrders('admin')).toBe(true)
+  for (const r of ['chairman', 'president', 'executive', 'teamlead'] as const) expect(canSeeOrders(r)).toBe(ORDERS_RELEASED)
+  const tab = TABS.find((t) => t.id === 'orders')!
+  expect((tab.roles as readonly string[]).includes('teamlead')).toBe(ORDERS_RELEASED)
+})

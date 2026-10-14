@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { isFullEditor } from '@/lib/rbac'
+import { ORDERS_RELEASED } from '@/lib/constants'
 import { notifyUsers, teamStakeholders } from '@/lib/notify'
 import { parseMentionNames } from '@/lib/mentions'
 import { requireMe, teamDepts } from '@/lib/orders/session'
@@ -28,6 +29,13 @@ const done = (orderId: string) => {
   revalidatePath('/orders/archive')
 }
 
+// 공개 전(ORDERS_RELEASED=false)에는 수주 알림을 관리자에게만 — 볼 수 없는 페이지로 가는 알림·메일 방지
+async function visibleTo(ids: string[]) {
+  if (ORDERS_RELEASED || !ids.length) return ids
+  const admins = await prisma.user.findMany({ where: { id: { in: ids }, role: 'admin' }, select: { id: true } })
+  return admins.map((a) => a.id)
+}
+
 // 팀(팀원+부문 임원) + 지정 담당자 이름 → 알림 (본인 제외). kind: order_change(확인 전까지 유지) | order_handoff
 async function notifyOrderTeams(orderId: string, teams: string[], actorId: string, kind: 'order_change' | 'order_handoff', text: string, names: string[] = []) {
   const [ids, named, order] = await Promise.all([
@@ -38,7 +46,7 @@ async function notifyOrderTeams(orderId: string, teams: string[], actorId: strin
   const label = order ? `${order.customer} · ${order.product}` : '수주'
   const title = kind === 'order_change' ? '수주 일정 변경 — 업데이트 필요' : '이전 단계 완료 — 착수 가능'
   await notifyUsers(
-    [...ids.flat(), ...named.map((u) => u.id)],
+    await visibleTo([...ids.flat(), ...named.map((u) => u.id)]),
     { kind, content: `${label}: ${text}`, href: href(orderId), email: { subject: `[HK] ${title}: ${label}`, title, lines: [label, text] } },
     actorId,
   )
@@ -269,7 +277,7 @@ export async function addComment(orderId: string, f: FormData) {
       prisma.user.findMany({ where: { OR: [{ name: { in: names } }, { team: { in: names } }] }, select: { id: true } }),
       prisma.order.findUnique({ where: { id: orderId }, select: { customer: true, product: true } }),
     ])
-    await notifyUsers(users.map((x) => x.id), { kind: 'mention', content: `${order?.customer ?? '수주'} · ${order?.product ?? ''}: ${text.slice(0, 80)}`, href: href(orderId) }, u.id)
+    await notifyUsers(await visibleTo(users.map((x) => x.id)), { kind: 'mention', content: `${order?.customer ?? '수주'} · ${order?.product ?? ''}: ${text.slice(0, 80)}`, href: href(orderId) }, u.id)
   }
   done(orderId)
 }
