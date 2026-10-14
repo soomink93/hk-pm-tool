@@ -63,6 +63,7 @@ export function TaskBoard({
   editableTeams,
   projects,
   lockProjectId,
+  initialOverdue,
 }: {
   tasks: Task[]
   myTeam: string
@@ -73,6 +74,7 @@ export function TaskBoard({
   editableTeams: 'all' | string[]
   projects?: { id: string; name: string }[]
   lockProjectId?: string
+  initialOverdue?: boolean
 }) {
   const router = useRouter()
   const canEditT = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
@@ -87,12 +89,14 @@ export function TaskBoard({
   const [busy, setBusy] = useState(false)
   const [filter, setFilter] = useState('all')
   const [projectFilter, setProjectFilter] = useState('all')
+  const [overdueOnly, setOverdueOnly] = useState(!!initialOverdue)
 
   const shownByProject =
     projectFilter === 'all' ? tasks
     : projectFilter === 'none' ? tasks.filter((t) => !t.projectId)
     : tasks.filter((t) => t.projectId === projectFilter)
-  const shown = filter === 'all' ? shownByProject : shownByProject.filter((t) => t.team === filter)
+  const shownByTeam = filter === 'all' ? shownByProject : shownByProject.filter((t) => t.team === filter)
+  const shown = overdueOnly ? shownByTeam.filter(isOverdue) : shownByTeam
 
   function openAdd() {
     setEditId(null)
@@ -142,6 +146,12 @@ export function TaskBoard({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-base font-bold text-navy">작업 보드</h1>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setOverdueOnly((v) => !v)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${overdueOnly ? 'bg-[#C00000] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            지연만
+          </button>
           {privileged && (
             <select className={`${inputClass} w-auto py-1.5`} value={filter} onChange={(e) => setFilter(e.target.value)}>
               <option value="all">전체 팀</option>

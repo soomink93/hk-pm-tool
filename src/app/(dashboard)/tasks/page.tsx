@@ -5,9 +5,10 @@ import { TaskBoard } from '@/components/dashboard/TaskBoard'
 
 export const dynamic = 'force-dynamic'
 
-export default async function TasksPage() {
+export default async function TasksPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const session = await auth()
   const { role, team } = session!.user
+  const initialOverdue = (await searchParams).filter === 'overdue'
 
   const where = role === 'teamlead' ? { team: team ?? '' } : {}
   const [tasks, teamRows, userRows, projectRows] = await Promise.all([
@@ -50,6 +51,7 @@ export default async function TasksPage() {
       currentUserId={session!.user.id}
       editableTeams={scopeToArray(await editableTeams(session!))}
       projects={projectRows}
+      initialOverdue={initialOverdue}
     />
   )
 }
