@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
+import Link from 'next/link'
 
-// ── 지표 타일: 아이콘 + 큰 숫자 + 증감 ──
+// ── 지표 타일: 아이콘 + 큰 숫자 + 증감 (href 지정 시 클릭하면 해당 탭으로 이동) ──
 export function StatTile({
   icon: Icon,
   title,
@@ -8,6 +9,7 @@ export function StatTile({
   sub,
   accent,
   delta,
+  href,
 }: {
   icon: ComponentType<{ size?: number }>
   title: string
@@ -15,9 +17,13 @@ export function StatTile({
   sub?: string
   accent: string
   delta?: number
+  href?: string
 }) {
-  return (
-    <div className="relative overflow-hidden rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+  const cls = `relative block overflow-hidden rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5${
+    href ? ' transition hover:shadow-md hover:ring-black/10' : ''
+  }`
+  const inner = (
+    <>
       <span className="absolute inset-y-0 left-0 w-1.5" style={{ background: accent }} />
       <div className="flex items-start justify-between">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: `${accent}1A`, color: accent }}>
@@ -32,8 +38,9 @@ export function StatTile({
       <div className="mt-3 text-3xl font-extrabold leading-none text-navy">{value}</div>
       <div className="mt-1.5 text-[12px] font-semibold text-slate-600">{title}</div>
       {sub && <div className="text-[11px] text-slate-400">{sub}</div>}
-    </div>
+    </>
   )
+  return href ? <Link href={href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>
 }
 
 // ── 진행률 링(도넛) ──

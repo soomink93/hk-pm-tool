@@ -98,10 +98,10 @@ export default async function OverviewPage() {
 
       {/* 핵심 지표 */}
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-        <StatTile icon={Handshake} title="진행 중 협업" value={activeCollabs.length} sub="요청·수락·진행" accent="#2E75B6" delta={nc7 - ncp} />
-        <StatTile icon={KanbanSquare} title="미완료 작업" value={openTasks.length} sub="할 일 + 진행 중" accent="#B7791F" />
-        <StatTile icon={Clock} title="지연 작업" value={overdueTasks.length} sub="마감 초과" accent="#E36C09" />
-        <StatTile icon={TriangleAlert} title="오픈 결정 요청" value={openEscal.length} sub={`긴급 ${urgentEscal.length}`} accent="#C00000" delta={ne7 - nep} />
+        <StatTile icon={Handshake} title="진행 중 협업" value={activeCollabs.length} sub="요청·수락·진행" accent="#2E75B6" delta={nc7 - ncp} href="/collaboration" />
+        <StatTile icon={KanbanSquare} title="미완료 작업" value={openTasks.length} sub="할 일 + 진행 중" accent="#B7791F" href="/tasks" />
+        <StatTile icon={Clock} title="지연 작업" value={overdueTasks.length} sub="마감 초과" accent="#E36C09" href="/tasks" />
+        <StatTile icon={TriangleAlert} title="오픈 결정 요청" value={openEscal.length} sub={`긴급 ${urgentEscal.length}`} accent="#C00000" delta={ne7 - nep} href="/escalation" />
       </div>
 
       {/* 작업 진행률 + 협업 상태 */}
