@@ -289,7 +289,7 @@ export function CollaborationManager({
   const refresh = () => router.refresh()
 
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ toTeam: '', content: '', priority: 'mid', dueDate: '', projectId: lockProjectId ?? '' })
+  const [form, setForm] = useState({ toTeams: [] as string[], content: '', priority: 'mid', dueDate: '', projectId: lockProjectId ?? '' })
   const [busy, setBusy] = useState(false)
   const [statusFilter, setStatusFilter] = useState('active')
   const [teamFilter, setTeamFilter] = useState('all')
@@ -319,24 +319,32 @@ export function CollaborationManager({
   const others = filtered.filter((c) => c.toTeam !== myTeam && c.fromTeam !== myTeam)
 
   function openNew() {
-    setForm({ toTeam: otherTeams[0] ?? '', content: '', priority: 'mid', dueDate: '', projectId: lockProjectId ?? '' })
+    setForm({ toTeams: [], content: '', priority: 'mid', dueDate: '', projectId: lockProjectId ?? '' })
     setOpen(true)
   }
+  function toggleTeam(t: string) {
+    setForm((f) => ({ ...f, toTeams: f.toTeams.includes(t) ? f.toTeams.filter((x) => x !== t) : [...f.toTeams, t] }))
+  }
   async function create() {
-    if (!form.content.trim()) return
+    if (!form.content.trim() || form.toTeams.length === 0) return
     setBusy(true)
-    const res = await fetch('/api/collaborations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
+    // 선택한 팀마다 독립 협업 요청 생성(각 팀이 따로 수락/거절)
+    const { toTeams, ...rest } = form
+    const results = await Promise.all(
+      toTeams.map((toTeam) =>
+        fetch('/api/collaborations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...rest, toTeam }),
+        }),
+      ),
+    )
     setBusy(false)
-    if (res.ok) {
+    const failed = results.filter((r) => !r.ok).length
+    if (failed) alert(`${failed}개 팀 요청에 실패했습니다.`)
+    if (failed < results.length) {
       setOpen(false)
       refresh()
-    } else {
-      const d = await res.json().catch(() => ({}))
-      alert(d.error ?? '요청 생성에 실패했습니다.')
     }
   }
 
@@ -424,12 +432,24 @@ export function CollaborationManager({
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="새 협업 요청">
-        <Field label="협업 대상 팀">
-          <select className={inputClass} value={form.toTeam} onChange={(e) => setForm({ ...form, toTeam: e.target.value })}>
-            {otherTeams.map((t) => (
-              <option key={t}>{t}</option>
-            ))}
-          </select>
+        <Field label={`협업 대상 팀 (여러 팀 선택 가능${form.toTeams.length ? ` · ${form.toTeams.length}개 선택` : ''})`}>
+          <div className="max-h-44 overflow-y-auto rounded-lg border border-line p-2">
+            <div className="flex flex-wrap gap-1.5">
+              {otherTeams.map((t) => {
+                const on = form.toTeams.includes(t)
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTeam(t)}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${on ? 'bg-navy text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  >
+                    {on ? '✓ ' : ''}{t}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </Field>
         <Field label="협업 필요 내용">
           <textarea
@@ -463,7 +483,9 @@ export function CollaborationManager({
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setOpen(false)}>취소</Button>
-          <Button onClick={create} disabled={busy}>{busy ? '요청 중…' : '요청 보내기'}</Button>
+          <Button onClick={create} disabled={busy || !form.content.trim() || form.toTeams.length === 0}>
+            {busy ? '요청 중…' : form.toTeams.length > 1 ? `${form.toTeams.length}개 팀에 요청` : '요청 보내기'}
+          </Button>
         </div>
       </Modal>
     </div>
