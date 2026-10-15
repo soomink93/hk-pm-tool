@@ -53,6 +53,11 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
   const span = Math.max(DAY, max - min)
   const pos = (t: number) => ((t - min) / span) * 100
   const todayP = pos(todayTs)
+  const delayOf = (due: string) => Math.round((todayTs - ts(due)) / DAY)
+
+  // 지연 요약
+  const overdueRows = rows.filter((t) => ts(t.dueDate) < todayTs && t.status !== 'done')
+  const maxDelay = overdueRows.reduce((m, t) => Math.max(m, delayOf(t.dueDate)), 0)
 
   // 월 눈금
   const ticks: { p: number; label: string }[] = []
@@ -66,6 +71,13 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
 
   return (
     <div>
+      {/* 지연 요약 */}
+      {overdueRows.length > 0 && (
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1 text-[11px] font-bold text-[#C00000]">
+          지연 {overdueRows.length}건 · 최대 {maxDelay}일 밀림
+        </div>
+      )}
+
       {/* 월 눈금 헤더 — 막대 트랙과 같은 폭으로 정렬(라벨/날짜열 침범 방지) */}
       <div className="mb-1 flex items-center gap-2">
         <span className="w-28 shrink-0" />
@@ -82,9 +94,12 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
           const s = t.start ? ts(t.start) : ts(t.dueDate)
           const e = ts(t.dueDate)
           const overdue = e < todayTs && t.status !== 'done'
+          const delay = overdue ? delayOf(t.dueDate) : 0
           const color = overdue ? '#C00000' : COLOR[t.status] ?? '#94A3B8'
-          const left = pos(Math.min(s, e))
-          const width = Math.max(2, pos(Math.max(s, e)) - left)
+          const planLeft = pos(Math.min(s, e))
+          const planRight = pos(Math.max(s, e))
+          const planWidth = Math.max(2, planRight - planLeft)
+          const tailWidth = overdue ? Math.max(0, todayP - planRight) : 0
           return (
             <div
               key={t.id}
@@ -98,9 +113,22 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
                   <span key={j} className="absolute inset-y-0 w-px bg-slate-200" style={{ left: `${tk.p}%` }} />
                 ))}
                 <span className="absolute inset-y-0 z-10 w-0.5 bg-navy-light" style={{ left: `${todayP}%` }} title="오늘" />
-                <span className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2 rounded-full" style={{ left: `${left}%`, width: `${width}%`, background: color }} />
+                {/* 계획 막대 (시작~마감) */}
+                <span className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2 rounded-full" style={{ left: `${planLeft}%`, width: `${planWidth}%`, background: color }} />
+                {/* 지연 꼬리 (마감~오늘, 빗금) */}
+                {overdue && tailWidth > 0.3 && (
+                  <span
+                    className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2 rounded-r-full"
+                    style={{ left: `${planRight}%`, width: `${tailWidth}%`, background: 'repeating-linear-gradient(45deg, #C00000 0 5px, #F4B4B4 5px 10px)' }}
+                    title={`마감 ${t.dueDate} 대비 ${delay}일 지연`}
+                  />
+                )}
+                {/* 마감 기준선 */}
+                {overdue && (
+                  <span className="absolute top-1/2 z-30 h-4 w-0.5 -translate-y-1/2 bg-[#7A0000]" style={{ left: `${planRight}%` }} title={`원래 마감 ${t.dueDate}`} />
+                )}
               </div>
-              <span className="w-12 shrink-0 text-right text-[10px] font-semibold" style={{ color }}>{overdue ? '지연' : t.dueDate.slice(5)}</span>
+              <span className="w-12 shrink-0 text-right text-[10px] font-semibold" style={{ color }}>{overdue ? `+${delay}일` : t.dueDate.slice(5)}</span>
             </div>
           )
         })}

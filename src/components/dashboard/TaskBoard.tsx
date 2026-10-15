@@ -148,7 +148,7 @@ export function TaskBoard({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setOverdueOnly((v) => !v)}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${overdueOnly ? 'bg-[#C00000] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold transition ${overdueOnly ? 'bg-[#C00000] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
           >
             지연만
           </button>
