@@ -13,7 +13,7 @@ export async function GET() {
   if (g.res) return g.res
   const users = await prisma.user.findMany({
     orderBy: { createdAt: 'asc' },
-    select: { id: true, name: true, email: true, role: true, team: true, department: true },
+    select: { id: true, name: true, email: true, role: true, title: true, team: true, department: true },
   })
   return NextResponse.json(users)
 }
@@ -37,12 +37,13 @@ export async function POST(req: Request) {
       email,
       name,
       role: role as Role,
+      title: String(b.title ?? '') || null,
       team: String(b.team ?? '') || null,
       department: String(b.department ?? '') || null,
       passwordHash: bcrypt.hashSync(password, 10),
       mustChangePassword: true,
     },
-    select: { id: true, name: true, email: true, role: true, team: true, department: true },
+    select: { id: true, name: true, email: true, role: true, title: true, team: true, department: true },
   })
   await logAudit(g.session, 'create', 'user', user.id, `사용자 추가: ${user.name} (${user.email}, ${user.role})`)
   const newTeamId = await ensureTeam(user.team, user.department, user.role === 'teamlead' ? user.name : '')

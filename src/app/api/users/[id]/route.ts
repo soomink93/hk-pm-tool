@@ -27,6 +27,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const data: Prisma.UserUpdateInput = {}
   if (b.name !== undefined) data.name = String(b.name)
+  if (b.title !== undefined) data.title = String(b.title) || null
   if (b.team !== undefined) data.team = String(b.team) || null
   if (b.department !== undefined) data.department = String(b.department) || null
   if (b.role !== undefined) {
@@ -40,7 +41,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const updated = await prisma.user.update({
     where: { id },
     data,
-    select: { id: true, name: true, email: true, role: true, team: true, department: true },
+    select: { id: true, name: true, email: true, role: true, title: true, team: true, department: true },
   })
   await logAudit(g.session, 'update', 'user', id, `사용자 수정: ${updated.name}`)
   const newTeamId = await ensureTeam(updated.team, updated.department, updated.role === 'teamlead' ? updated.name : '')

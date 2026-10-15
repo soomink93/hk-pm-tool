@@ -14,7 +14,7 @@ export default async function SettingsPage() {
     canManage
       ? prisma.user.findMany({
           orderBy: { createdAt: 'asc' },
-          select: { id: true, name: true, email: true, role: true, team: true, department: true },
+          select: { id: true, name: true, email: true, role: true, title: true, team: true, department: true },
         })
       : Promise.resolve([]),
     canManage

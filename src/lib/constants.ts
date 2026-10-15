@@ -44,6 +44,7 @@ const ALL_ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
 export const TABS = [
   { id: 'calendar', label: '캘린더', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'members', label: '구성원', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'projects', label: '프로젝트', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'roadmap', label: '로드맵', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'orders', label: '수주·생산', roles: ORDERS_RELEASED ? ALL_ROLES : ['admin'] },

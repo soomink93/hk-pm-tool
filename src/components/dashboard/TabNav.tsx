@@ -18,6 +18,7 @@ import {
   Factory,
   Inbox,
   CalendarDays,
+  Users,
 } from 'lucide-react'
 import { TABS } from '@/lib/constants'
 import type { Role } from '@/lib/rbac'
@@ -25,6 +26,7 @@ import type { Role } from '@/lib/rbac'
 const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   calendar: CalendarDays,
   overview: LayoutDashboard,
+  members: Users,
   projects: FolderKanban,
   roadmap: GanttChartSquare,
   orders: Factory,

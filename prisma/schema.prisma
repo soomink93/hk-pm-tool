@@ -20,6 +20,7 @@ model User {
   name         String
   passwordHash String
   role         Role
+  title        String?  // 직급(실장·이사·과장 등) — 시스템 역할과 별개
   team         String?
   department   String?
   mustChangePassword Boolean @default(false)

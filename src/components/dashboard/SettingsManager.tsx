@@ -9,10 +9,10 @@ import { Modal, Field, inputClass } from '@/components/ui/Modal'
 type Role = 'admin' | 'chairman' | 'president' | 'executive' | 'teamlead'
 const ROLE_LABEL: Record<string, string> = { admin: '관리자', chairman: '회장님', president: '사장', executive: '임원', teamlead: '팀장' }
 
-export type UserRow = { id: string; name: string; email: string; role: string; team: string | null; department: string | null }
+export type UserRow = { id: string; name: string; email: string; role: string; title: string | null; team: string | null; department: string | null }
 export type TeamRow = { id: string; name: string; lead: string; department: string | null }
 
-const emptyUser = { name: '', email: '', role: 'teamlead' as Role, team: '', department: '', password: '' }
+const emptyUser = { name: '', email: '', role: 'teamlead' as Role, title: '', team: '', department: '', password: '' }
 const emptyTeam = { name: '', lead: '', department: '' }
 
 export function SettingsManager({
@@ -52,7 +52,7 @@ export function SettingsManager({
   }
   function openEditUser(u: UserRow) {
     setUserEditId(u.id)
-    setUserForm({ name: u.name, email: u.email, role: u.role as Role, team: u.team ?? '', department: u.department ?? '', password: '' })
+    setUserForm({ name: u.name, email: u.email, role: u.role as Role, title: u.title ?? '', team: u.team ?? '', department: u.department ?? '', password: '' })
     setUserOpen(true)
   }
   async function saveUser() {
@@ -253,7 +253,10 @@ export function SettingsManager({
         <Field label="이메일">
           <input type="email" className={inputClass} value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} readOnly={!!userEditId} placeholder="name@hk-global.com" />
         </Field>
-        <Field label="역할">
+        <Field label="직급 (선택)">
+          <input className={inputClass} value={userForm.title} onChange={(e) => setUserForm({ ...userForm, title: e.target.value })} placeholder="예) 이사 · 실장 · 과장" />
+        </Field>
+        <Field label="역할 (권한)">
           <select className={inputClass} value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value as Role })}>
             <option value="teamlead">팀장</option>
             <option value="executive">임원</option>
