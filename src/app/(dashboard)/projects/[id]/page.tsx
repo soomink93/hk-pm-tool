@@ -4,9 +4,10 @@ import { ArrowLeft, FolderKanban } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { editableTeams, scopeToArray } from '@/lib/scope'
-import { can, isFullEditor } from '@/lib/rbac'
+import { can, isFullEditor, canEditProject, type Role } from '@/lib/rbac'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { ProjectStatusControl } from '@/components/dashboard/ProjectStatusControl'
 import { TaskBoard } from '@/components/dashboard/TaskBoard'
 import { CollaborationManager } from '@/components/dashboard/CollaborationManager'
 import { EscalationManager } from '@/components/dashboard/EscalationManager'
@@ -72,6 +73,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const teams = teamRows.map((t) => t.name)
   const users = userRows.map((u) => ({ id: u.id, name: u.name, team: u.team ?? '' }))
   const meta = STATUS_META[project.status] ?? STATUS_META.active
+  const canEditProj = canEditProject(role as Role, project.ownerId, session!.user.id)
   const progress = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0
 
   return (
@@ -85,7 +87,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <h1 className="flex items-center gap-2 text-lg font-bold text-navy">
               <FolderKanban size={18} className="shrink-0 text-navy-light" />{project.name}
             </h1>
-            <Badge tone={meta.tone}>{meta.label}</Badge>
+            {canEditProj
+              ? <ProjectStatusControl projectId={id} status={project.status} />
+              : <Badge tone={meta.tone}>{meta.label}</Badge>}
           </div>
           {project.description && <p className="mt-1.5 whitespace-pre-wrap text-[13px] text-slate-500">{project.description}</p>}
           <div className="mt-2 text-[12px] text-slate-400">
