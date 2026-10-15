@@ -33,22 +33,8 @@ model Team {
   name       String     @unique
   lead       String
   department String?
-  submitted  Boolean    @default(false)
-  risk       String     @default("없음")
-  escalation String     @default("없음")
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
-}
-
-model Kpi {
-  id        String   @id @default(cuid())
-  team      String
-  metric    String
-  target    Float
-  current   Float
-  unit      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Decision {

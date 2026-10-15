@@ -5,7 +5,7 @@ import { guard } from '@/lib/api-guard'
 import { editableTeams, canEditTeam } from '@/lib/scope'
 import { logAudit } from '@/lib/audit'
 
-// 팀 상태/리스크 수정: 해당 부문 임원(또는 전체 편집자)만
+// 팀 정보(팀장·부서) 수정: 해당 부문 임원(또는 전체 편집자)만
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard()
   if (g.res) return g.res
@@ -18,8 +18,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const b = await req.json()
   const data: Prisma.TeamUpdateInput = {}
   if (b.lead !== undefined) data.lead = String(b.lead)
-  if (b.risk !== undefined) data.risk = String(b.risk)
-  if (b.escalation !== undefined) data.escalation = String(b.escalation)
   if (b.department !== undefined) data.department = String(b.department)
   const updated = await prisma.team.update({ where: { id }, data })
   await logAudit(g.session, 'update', 'team', id, `팀 수정: ${updated.name}`)

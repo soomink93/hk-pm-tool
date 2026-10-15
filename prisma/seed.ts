@@ -28,26 +28,14 @@ async function main() {
   }
 
   const teams = [
-    { name: "영업팀",   lead: "김민준", submitted: true,  risk: "없음", escalation: "없음" },
-    { name: "마케팅팀", lead: "이서연", submitted: true,  risk: "Q2 캠페인 일정 지연 위험", escalation: "없음" },
-    { name: "인사팀",   lead: "박지호", submitted: false, risk: "—", escalation: "—" },
-    { name: "재무팀",   lead: "최수아", submitted: true,  risk: "Q2 예산 초과 가능성", escalation: "하반기 예산 재편성 승인 필요" },
-    { name: "운영팀",   lead: "정태양", submitted: true,  risk: "없음", escalation: "없음" },
+    { name: "영업팀",   lead: "김민준" },
+    { name: "마케팅팀", lead: "이서연" },
+    { name: "인사팀",   lead: "박지호" },
+    { name: "재무팀",   lead: "최수아" },
+    { name: "운영팀",   lead: "정태양" },
   ];
   for (const t of teams) {
     await prisma.team.upsert({ where: { name: t.name }, update: {}, create: t });
-  }
-
-  if ((await prisma.kpi.count()) === 0) {
-    await prisma.kpi.createMany({
-      data: [
-        { team: "영업팀",   metric: "월 매출 목표",  target: 100, current: 92,  unit: "%" },
-        { team: "마케팅팀", metric: "리드 획득 수",  target: 200, current: 134, unit: "건" },
-        { team: "인사팀",   metric: "채용 목표",     target: 10,  current: 7,   unit: "명" },
-        { team: "재무팀",   metric: "비용 절감률",   target: 15,  current: 8,   unit: "%" },
-        { team: "운영팀",   metric: "프로세스 개선", target: 5,   current: 5,   unit: "건" },
-      ],
-    });
   }
 
   if ((await prisma.decision.count()) === 0) {

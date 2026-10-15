@@ -23,9 +23,6 @@ export async function POST(req: Request) {
       name,
       lead: String(b.lead ?? ''),
       department: String(b.department ?? '') || null,
-      risk: String(b.risk ?? '없음'),
-      escalation: String(b.escalation ?? '없음'),
-      submitted: false,
     },
   })
   await logAudit(g.session, 'create', 'team', team.id, `팀 추가: ${team.name}`)

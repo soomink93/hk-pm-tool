@@ -79,6 +79,14 @@ export default function LoginForm() {
 
         {error && <p className="text-center text-[13px] text-red-600">{error}</p>}
       </form>
+
+      <div className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-[12px] leading-relaxed text-slate-500">
+        <b className="text-slate-600">처음 로그인하시나요?</b><br />
+        초기 비밀번호는 <code className="rounded bg-white px-1 font-bold text-navy">!아이디@</code> 입니다.
+        아이디는 회사 이메일에서 <b>@ 앞부분</b> 전체예요.<br />
+        예: <code className="text-slate-600">hong@hk-global.com</code> → 비밀번호 <code className="font-bold text-navy">!hong@</code><br />
+        안 되면 관리자(계수민 실장)에게 비밀번호 초기화를 요청하세요.
+      </div>
     </div>
   )
 }
