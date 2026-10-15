@@ -56,6 +56,8 @@ function CollabCard({
   const [acceptForm, setAcceptForm] = useState({ assigneeId: '', dueDate: '' })
   const [declineOpen, setDeclineOpen] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
+  const [rsOpen, setRsOpen] = useState(false)
+  const [rsForm, setRsForm] = useState({ dueDate: '', reason: '' })
   const [editId, setEditId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
 
@@ -88,6 +90,18 @@ function CollabCard({
     setDeclineOpen(false)
     await setStatus('declined', { reason: declineReason })
     setDeclineReason('')
+  }
+  async function confirmReschedule() {
+    if (!rsForm.dueDate || !rsForm.reason.trim()) return
+    setBusy(true)
+    const res = await fetch(`/api/collaborations/${c.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reschedule', dueDate: rsForm.dueDate, reason: rsForm.reason }),
+    })
+    setBusy(false)
+    if (res.ok) { setRsOpen(false); onChanged() }
+    else { const d = await res.json().catch(() => ({})); alert(d.error ?? '변경에 실패했습니다.') }
   }
   async function cancel() {
     if (!confirm('이 협업 요청을 취소(삭제)하시겠습니까?')) return
@@ -153,6 +167,9 @@ function CollabCard({
           )}
           {c.status === 'accepted' && <Button onClick={() => setStatus('in_progress')} disabled={busy}>진행 시작</Button>}
           {c.status === 'in_progress' && <Button onClick={() => setStatus('done')} disabled={busy}>완료 처리</Button>}
+          {canRespond && (
+            <Button variant="ghost" onClick={() => { setRsForm({ dueDate: c.dueDate ?? '', reason: '' }); setRsOpen(true) }} disabled={busy}>희망일 변경</Button>
+          )}
           {isRequester && c.status === 'requested' && (
             <Button variant="ghost" onClick={cancel} disabled={busy}>요청 취소</Button>
           )}
@@ -260,6 +277,27 @@ function CollabCard({
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setDeclineOpen(false)}>취소</Button>
           <Button onClick={confirmDecline} disabled={busy || !declineReason.trim()}>거절 처리</Button>
+        </div>
+      </Modal>
+
+      <Modal open={rsOpen} onClose={() => setRsOpen(false)} title="희망 완료일 변경">
+        <p className="mb-3 text-[13px] text-slate-500">
+          받는 팀 사정에 맞게 희망 완료일을 조정합니다. 변경 사유는 <b className="text-navy">{c.fromTeam}</b>에게 댓글·알림으로 전달됩니다.
+        </p>
+        <Field label="새 희망 완료일">
+          <input type="date" className={inputClass} value={rsForm.dueDate} onChange={(e) => setRsForm({ ...rsForm, dueDate: e.target.value })} />
+        </Field>
+        <Field label="변경 사유 (필수)">
+          <textarea
+            className={`${inputClass} min-h-20`}
+            value={rsForm.reason}
+            onChange={(e) => setRsForm({ ...rsForm, reason: e.target.value })}
+            placeholder="예: 선행 작업 지연으로 일주일 순연 요청"
+          />
+        </Field>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setRsOpen(false)}>취소</Button>
+          <Button onClick={confirmReschedule} disabled={busy || !rsForm.dueDate || !rsForm.reason.trim()}>변경</Button>
         </div>
       </Modal>
     </Card>

@@ -16,6 +16,34 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id: userId, name, role } = g.session.user
   const { id } = await params
   const b = await req.json()
+
+  // ── 희망 완료일 변경 (받는 팀만, 사유 필수) ──
+  if (b.action === 'reschedule') {
+    const collab = await prisma.collaboration.findUnique({ where: { id } })
+    if (!collab) return NextResponse.json({ error: '항목을 찾을 수 없습니다.' }, { status: 404 })
+    const scope = await editableTeams(g.session)
+    if (!isFullEditor(role as Role) && !canEditTeam(scope, collab.toTeam))
+      return NextResponse.json({ error: '요청을 받은 팀만 희망일을 변경할 수 있습니다.' }, { status: 403 })
+    const newDue = String(b.dueDate ?? '').trim()
+    const reason = String(b.reason ?? '').trim()
+    if (!newDue) return NextResponse.json({ error: '변경할 날짜를 입력하세요.' }, { status: 400 })
+    if (!reason) return NextResponse.json({ error: '변경 사유를 입력하세요.' }, { status: 400 })
+    const updated = await prisma.collaboration.update({ where: { id }, data: { dueDate: newDue } })
+    await prisma.collaborationComment.create({
+      data: { collaborationId: id, authorId: userId, authorName: name ?? '', body: `희망 완료일 변경: ${collab.dueDate || '미정'} → ${newDue} (사유: ${reason})` },
+    })
+    await createCollabNotifications({
+      teams: [collab.fromTeam],
+      fromTeam: collab.fromTeam,
+      toTeam: collab.toTeam,
+      content: `[희망일 변경] ${collab.content} (${collab.dueDate || '미정'}→${newDue})`,
+      kind: 'status',
+      actorId: userId,
+    })
+    await logAudit(g.session, 'update', 'collaboration', id, `협업 희망일 변경: ${collab.dueDate || '미정'}→${newDue} (${collab.fromTeam}→${collab.toTeam})`)
+    return NextResponse.json(updated)
+  }
+
   const status = String(b.status ?? '') as CollabStatus
   if (!VALID.includes(status)) return NextResponse.json({ error: '상태 값이 올바르지 않습니다.' }, { status: 400 })
 
