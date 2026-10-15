@@ -18,14 +18,16 @@ export async function GET() {
   return NextResponse.json({ items, unread })
 }
 
-// 본인 알림 모두 읽음 처리
-export async function PATCH() {
+// 본인 알림 읽음 처리: body { id } 있으면 그 하나만, 없으면 전체
+export async function PATCH(req: Request) {
   const g = await guard()
   if (g.res) return g.res
-  await prisma.notification.updateMany({
-    // 수주 '업데이트 필요'는 확인 완료·단계 수정 전까지 유지
-    where: { recipientUserId: g.session.user.id, read: false, kind: { not: 'order_change' } },
-    data: { read: true },
-  })
+  const uid = g.session.user.id
+  const body = await req.json().catch(() => ({} as { id?: string }))
+  // 수주 '업데이트 필요'는 확인 완료·단계 수정 전까지 유지
+  const where = body?.id
+    ? { id: String(body.id), recipientUserId: uid, kind: { not: 'order_change' } }
+    : { recipientUserId: uid, read: false, kind: { not: 'order_change' } }
+  await prisma.notification.updateMany({ where, data: { read: true } })
   return NextResponse.json({ ok: true })
 }

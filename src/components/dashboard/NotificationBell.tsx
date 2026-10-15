@@ -77,19 +77,34 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
 
-  async function toggle() {
-    const next = !open
-    setOpen(next)
-    if (next && unread > 0) {
-      setUnread(0)
-      await fetch('/api/notifications', { method: 'PATCH' })
-      setItems((prev) => prev.map((i) => ({ ...i, read: true })))
-    }
+  const [sortMode, setSortMode] = useState<'smart' | 'recent'>('smart')
+
+  function toggle() {
+    setOpen((v) => !v)
+  }
+  async function markAll() {
+    setItems((prev) => prev.map((i) => (i.kind === 'order_change' ? i : { ...i, read: true })))
+    setUnread((u) => Math.max(0, u - items.filter((i) => !i.read && i.kind !== 'order_change').length))
+    await fetch('/api/notifications', { method: 'PATCH' })
+    load()
+  }
+  async function markOne(n: Noti) {
+    if (n.read || n.kind === 'order_change') return
+    setItems((prev) => prev.map((i) => (i.id === n.id ? { ...i, read: true } : i)))
+    setUnread((u) => Math.max(0, u - 1))
+    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: n.id }) })
   }
 
-  function go(href: string | null) {
+  // 정렬: smart = 안읽음 먼저(각 최신순), recent = 순수 최신순
+  const sorted = [...items].sort((a, b) => {
+    if (sortMode === 'smart' && a.read !== b.read) return a.read ? 1 : -1
+    return a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
+  })
+
+  function go(n: Noti) {
+    markOne(n)
     setOpen(false)
-    if (href) router.push(href)
+    if (n.href) router.push(n.href)
   }
 
   return (
@@ -105,23 +120,41 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-xl bg-white text-slate-800 shadow-2xl ring-1 ring-black/10">
-          <div className="border-b border-line px-4 py-2.5 text-[13px] font-bold text-navy">알림</div>
+          <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+            <span className="text-[13px] font-bold text-navy">알림</span>
+            {items.some((i) => !i.read) && (
+              <button onClick={markAll} className="text-[11px] font-semibold text-navy-light hover:underline">모두 읽음</button>
+            )}
+          </div>
+          {items.length > 0 && (
+            <div className="flex gap-1 border-b border-line px-3 py-1.5">
+              {([['smart', '안읽음 먼저'], ['recent', '최신순']] as const).map(([m, label]) => (
+                <button
+                  key={m}
+                  onClick={() => setSortMode(m)}
+                  className={`rounded px-2 py-0.5 text-[11px] font-semibold transition ${sortMode === m ? 'bg-navy text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="max-h-80 overflow-y-auto">
             {items.length === 0 ? (
               <p className="px-4 py-8 text-center text-[13px] text-slate-400">새로운 알림이 없습니다.</p>
             ) : (
-              items.map((n) => {
+              sorted.map((n) => {
                 const Icon = KIND_ICON[n.kind] ?? Handshake
                 return (
                   <button
                     key={n.id}
-                    onClick={() => go(n.href)}
-                    className={`flex w-full gap-2.5 border-b border-slate-50 px-4 py-3 text-left transition last:border-0 hover:bg-slate-50 ${n.read ? '' : 'bg-blue-50/40'}`}
+                    onClick={() => go(n)}
+                    className={`flex w-full gap-2.5 border-b border-slate-50 px-4 py-3 text-left transition last:border-0 hover:bg-slate-50 ${n.read ? 'bg-white opacity-55' : 'bg-blue-50/40'}`}
                   >
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-navy-light">
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${n.read ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-navy-light'}`}>
                       <Icon size={14} />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       {COLLAB_KINDS.includes(n.kind) && n.fromTeam && n.toTeam ? (
                         <p className="text-[13px]">
                           <b className="text-navy">{n.fromTeam}</b>
@@ -134,6 +167,7 @@ export function NotificationBell() {
                       <p className="mt-0.5 break-words text-xs text-slate-500">{n.content}</p>
                       <p className="mt-0.5 text-[11px] text-slate-400">{timeAgo(n.createdAt)}</p>
                     </div>
+                    {!n.read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500" />}
                   </button>
                 )
               })
