@@ -21,7 +21,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = String((await req.json()).body ?? '').trim()
   if (!body) return NextResponse.json({ error: '내용을 입력하세요.' }, { status: 400 })
   const updated = await prisma.collaborationComment.update({ where: { id: cid }, data: { body } })
-  await notifyMentions(body, '/collaboration', '협업 댓글', g.session.user.id)
+  await notifyMentions(body, '/collaboration', '협업 댓글', g.session.user.id, g.session.user.name ?? undefined)
   return NextResponse.json(updated)
 }
 

@@ -26,6 +26,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     data: { taskId: id, authorId: userId, authorName: name ?? '', body },
   })
   await prisma.task.update({ where: { id }, data: { updatedAt: new Date() } })
-  await notifyMentions(body, '/tasks', `작업 댓글 · ${task.title}`, userId)
+  await notifyMentions(body, '/tasks', `작업 댓글 · ${task.title}`, userId, name ?? undefined)
   return NextResponse.json(comment, { status: 201 })
 }

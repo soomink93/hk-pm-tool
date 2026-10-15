@@ -22,7 +22,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!body) return NextResponse.json({ error: '내용을 입력하세요.' }, { status: 400 })
   const updated = await prisma.taskComment.update({ where: { id: cid }, data: { body } })
   const task = await prisma.task.findUnique({ where: { id }, select: { title: true } })
-  await notifyMentions(body, '/tasks', `작업 댓글 · ${task?.title ?? ''}`, g.session.user.id)
+  await notifyMentions(body, '/tasks', `작업 댓글 · ${task?.title ?? ''}`, g.session.user.id, g.session.user.name ?? undefined)
   return NextResponse.json(updated)
 }
 

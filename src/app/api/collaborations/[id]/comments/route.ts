@@ -34,6 +34,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     kind: 'comment',
     actorId: userId,
   })
-  await notifyMentions(body, '/collaboration', `${collab.fromTeam}→${collab.toTeam} 협업 댓글`, userId)
+  await notifyMentions(body, '/collaboration', `${collab.fromTeam}→${collab.toTeam} 협업 댓글`, userId, name ?? undefined)
   return NextResponse.json(comment, { status: 201 })
 }
