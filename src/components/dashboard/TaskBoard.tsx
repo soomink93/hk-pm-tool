@@ -235,7 +235,7 @@ export function TaskBoard({
                           </button>
                         </div>
                       )}
-                      <TaskComments taskId={t.id} comments={t.comments} canComment={canEditT(t.team) || t.assigneeId === currentUserId} />
+                      <TaskComments taskId={t.id} comments={t.comments} canComment={canEditT(t.team) || t.assigneeId === currentUserId} users={users} currentUserId={currentUserId} />
                       <ItemHistory entity="task" id={t.id} />
                     </Card>
                   )

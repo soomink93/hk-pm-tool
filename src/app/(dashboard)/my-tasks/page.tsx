@@ -28,7 +28,7 @@ export default async function MyTasksPage() {
         priority: t.priority,
         dueDate: t.dueDate,
         collabFrom: t.collaboration?.fromTeam ?? null,
-        comments: t.comments.map((m) => ({ id: m.id, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
+        comments: t.comments.map((m) => ({ id: m.id, authorId: m.authorId, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
       }))}
     />
   )

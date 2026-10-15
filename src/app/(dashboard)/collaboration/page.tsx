@@ -44,6 +44,7 @@ export default async function CollaborationPage() {
         projectName: c.project?.name ?? null,
         comments: c.comments.map((m) => ({
           id: m.id,
+          authorId: m.authorId,
           authorName: m.authorName,
           body: m.body,
           createdAt: m.createdAt.toISOString(),
@@ -55,6 +56,7 @@ export default async function CollaborationPage() {
       users={userRows.map((u) => ({ id: u.id, name: u.name, team: u.team ?? '' }))}
       editableTeams={scopeToArray(await editableTeams(session!))}
       projects={projectRows}
+      currentUserId={session!.user.id}
     />
   )
 }

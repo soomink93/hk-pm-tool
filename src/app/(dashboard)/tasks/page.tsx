@@ -42,7 +42,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         collabFrom: t.collaboration?.fromTeam ?? null,
         projectId: t.projectId,
         projectName: t.project?.name ?? null,
-        comments: t.comments.map((m) => ({ id: m.id, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
+        comments: t.comments.map((m) => ({ id: m.id, authorId: m.authorId, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
       }))}
       myTeam={team ?? ''}
       teams={teamRows.map((t) => t.name)}

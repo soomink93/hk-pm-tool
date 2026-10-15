@@ -143,7 +143,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             collabFrom: t.collaboration?.fromTeam ?? null,
             projectId: t.projectId,
             projectName: null,
-            comments: t.comments.map((m) => ({ id: m.id, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
+            comments: t.comments.map((m) => ({ id: m.id, authorId: m.authorId, authorName: m.authorName, body: m.body, createdAt: m.createdAt.toISOString() })),
           }))}
           myTeam={team ?? ''}
           teams={teams}
@@ -173,6 +173,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             projectName: null,
             comments: c.comments.map((m) => ({
               id: m.id,
+              authorId: m.authorId,
               authorName: m.authorName,
               body: m.body,
               createdAt: m.createdAt.toISOString(),
@@ -184,6 +185,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           users={users}
           editableTeams={editable}
           lockProjectId={id}
+          currentUserId={session!.user.id}
         />
       </section>
 

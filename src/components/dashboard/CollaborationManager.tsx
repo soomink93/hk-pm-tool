@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Send, MessageSquare, ArrowRight, KanbanSquare } from 'lucide-react'
+import { Plus, Send, MessageSquare, ArrowRight, KanbanSquare, Pencil, X, Check } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
+import { MentionInput } from './MentionInput'
+import { MentionText } from './MentionText'
 import { COLLAB_STATE_LABEL, COLLAB_STATE_TONE, TASK_STATUS_LABEL } from '@/lib/constants'
 
-export type Comment = { id: string; authorName: string; body: string; createdAt: string }
+export type Comment = { id: string; authorId?: string; authorName: string; body: string; createdAt: string }
 export type LinkedTask = { id: string; title: string; status: string }
 export type UserOpt = { id: string; name: string; team: string }
 export type Collab = {
@@ -38,11 +40,13 @@ function CollabCard({
   c,
   editableTeams,
   users,
+  currentUserId,
   onChanged,
 }: {
   c: Collab
   editableTeams: 'all' | string[]
   users: UserOpt[]
+  currentUserId?: string
   onChanged: () => void
 }) {
   const [comment, setComment] = useState('')
@@ -52,6 +56,8 @@ function CollabCard({
   const [acceptForm, setAcceptForm] = useState({ assigneeId: '', dueDate: '' })
   const [declineOpen, setDeclineOpen] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editText, setEditText] = useState('')
 
   const canT = (t: string) => editableTeams === 'all' || editableTeams.includes(t)
   const involved = canT(c.fromTeam) || canT(c.toTeam)
@@ -59,6 +65,8 @@ function CollabCard({
   const isRequester = canT(c.fromTeam)
   const terminal = c.status === 'done' || c.status === 'declined'
   const toTeamMembers = users.filter((u) => u.team === c.toTeam)
+  // 수락 시 내가 받는 팀 소속이면 기본 담당자를 '나'로
+  const selfInToTeam = !!currentUserId && toTeamMembers.some((u) => u.id === currentUserId)
 
   async function setStatus(status: string, extra?: Record<string, string>) {
     setBusy(true)
@@ -102,6 +110,22 @@ function CollabCard({
       onChanged()
     } else alert('댓글 등록에 실패했습니다.')
   }
+  async function saveEdit(cid: string) {
+    if (!editText.trim()) return
+    const res = await fetch(`/api/collaborations/${c.id}/comments/${cid}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: editText }),
+    })
+    if (res.ok) { setEditId(null); onChanged() }
+    else alert('수정에 실패했습니다.')
+  }
+  async function delComment(cid: string) {
+    if (!confirm('댓글을 삭제하시겠습니까?')) return
+    const res = await fetch(`/api/collaborations/${c.id}/comments/${cid}`, { method: 'DELETE' })
+    if (res.ok) onChanged()
+    else alert('삭제에 실패했습니다.')
+  }
 
   return (
     <Card className="!p-4">
@@ -123,7 +147,7 @@ function CollabCard({
         <div className="mt-3 flex flex-wrap gap-2">
           {c.status === 'requested' && canRespond && (
             <>
-              <Button onClick={() => { setAcceptForm({ assigneeId: '', dueDate: c.dueDate ?? '' }); setAcceptOpen(true) }} disabled={busy}>수락</Button>
+              <Button onClick={() => { setAcceptForm({ assigneeId: selfInToTeam ? currentUserId! : '', dueDate: c.dueDate ?? '' }); setAcceptOpen(true) }} disabled={busy}>수락</Button>
               <Button variant="ghost" onClick={() => { setDeclineReason(''); setDeclineOpen(true) }} disabled={busy}>거절</Button>
             </>
           )}
@@ -161,27 +185,38 @@ function CollabCard({
 
         {showComments && (
           <div className="mt-2 space-y-2">
-            {c.comments.map((m) => (
-              <div key={m.id} className="rounded-md bg-slate-50 px-3 py-2">
-                <div className="text-[11px] text-slate-400">
-                  <b className="text-slate-600">{m.authorName}</b> · {fmt(m.createdAt)}
+            {c.comments.map((m) => {
+              const mine = !!currentUserId && m.authorId === currentUserId
+              return (
+                <div key={m.id} className="rounded-md bg-slate-50 px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] text-slate-400"><b className="text-slate-600">{m.authorName}</b> · {fmt(m.createdAt)}</div>
+                    {mine && editId !== m.id && (
+                      <div className="flex gap-0.5">
+                        <button onClick={() => { setEditId(m.id); setEditText(m.body) }} className="rounded p-0.5 text-slate-400 hover:text-navy-light" aria-label="수정"><Pencil size={12} /></button>
+                        <button onClick={() => delComment(m.id)} className="rounded p-0.5 text-slate-400 hover:text-red-600" aria-label="삭제"><X size={13} /></button>
+                      </div>
+                    )}
+                  </div>
+                  {editId === m.id ? (
+                    <div className="mt-1 flex gap-1.5">
+                      <MentionInput value={editText} onChange={setEditText} users={users} onEnter={() => saveEdit(m.id)} className={inputClass} />
+                      <button onClick={() => saveEdit(m.id)} className="rounded p-1 text-slate-500 hover:text-navy-light" aria-label="저장"><Check size={14} /></button>
+                      <button onClick={() => setEditId(null)} className="rounded p-1 text-slate-400 hover:text-slate-600" aria-label="취소"><X size={14} /></button>
+                    </div>
+                  ) : (
+                    <div className="text-[13px] text-slate-700"><MentionText text={m.body} /></div>
+                  )}
                 </div>
-                <div className="text-[13px] text-slate-700">{m.body}</div>
-              </div>
-            ))}
+              )
+            })}
             {c.comments.length === 0 && <p className="text-[12px] text-slate-400">아직 댓글이 없습니다.</p>}
           </div>
         )}
 
         {involved && (
           <div className="mt-2 flex gap-2">
-            <input
-              className={inputClass}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addComment()}
-              placeholder="댓글 (@이름 멘션)"
-            />
+            <MentionInput value={comment} onChange={setComment} users={users} onEnter={addComment} placeholder="댓글 (@이름 멘션)" className={inputClass} />
             <Button onClick={addComment} disabled={busy || !comment.trim()}>
               <Send size={13} />
             </Button>
@@ -239,6 +274,7 @@ export function CollaborationManager({
   editableTeams,
   projects,
   lockProjectId,
+  currentUserId,
 }: {
   items: Collab[]
   myTeam: string
@@ -247,6 +283,7 @@ export function CollaborationManager({
   editableTeams: 'all' | string[]
   projects?: { id: string; name: string }[]
   lockProjectId?: string
+  currentUserId?: string
 }) {
   const router = useRouter()
   const refresh = () => router.refresh()
@@ -309,7 +346,7 @@ export function CollaborationManager({
         <h2 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-slate-500">{title} ({list.length})</h2>
         <div className="space-y-3">
           {list.map((c) => (
-            <CollabCard key={c.id} c={c} editableTeams={editableTeams} users={users} onChanged={refresh} />
+            <CollabCard key={c.id} c={c} editableTeams={editableTeams} users={users} currentUserId={currentUserId} onChanged={refresh} />
           ))}
         </div>
       </div>
