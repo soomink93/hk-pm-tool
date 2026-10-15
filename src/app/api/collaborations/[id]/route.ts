@@ -60,6 +60,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           assigneeId = u.id
         }
       }
+      // 담당자 미지정 + 수락자가 받는 팀 소속이면 수락자를 자동 담당자로 → 내 작업에 유입
+      if (!assigneeId && g.session.user.team === collab.toTeam) {
+        assignee = name ?? ''
+        assigneeId = userId
+      }
       try {
         await prisma.task.create({
           data: {

@@ -140,6 +140,15 @@ export function TaskBoard({
     if (res.ok) router.refresh()
     else alert('삭제에 실패했습니다.')
   }
+  async function claim(id: string) {
+    const res = await fetch(`/api/tasks/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assigneeId: currentUserId }),
+    })
+    if (res.ok) router.refresh()
+    else alert('배정에 실패했습니다.')
+  }
 
   return (
     <div className="space-y-4">
@@ -206,8 +215,14 @@ export function TaskBoard({
                       )}
                       {t.description && <p className="mb-2 line-clamp-2 text-xs text-slate-500">{t.description}</p>}
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
-                        {t.assignee && (
+                        {t.assignee ? (
                           <span className="flex items-center gap-1"><User size={11} /> {t.assignee}</span>
+                        ) : editable(t) ? (
+                          <button onClick={() => claim(t.id)} className="flex items-center gap-1 rounded bg-navy-light/10 px-1.5 py-0.5 font-semibold text-navy-light hover:bg-navy-light/20">
+                            <User size={11} /> 나에게 배정
+                          </button>
+                        ) : (
+                          <span className="flex items-center gap-1 text-slate-300"><User size={11} /> 미지정</span>
                         )}
                         {t.dueDate && (
                           <span className="flex items-center gap-1" style={{ color: overdue ? '#C00000' : undefined, fontWeight: overdue ? 700 : 400 }}>
