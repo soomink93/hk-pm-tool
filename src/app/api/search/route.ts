@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { can } from '@/lib/rbac'
-import { STATUS_LABEL } from '@/lib/constants'
 
 type Hit = { type: string; typeLabel: string; id: string; title: string; subtitle: string; href: string }
 
@@ -31,7 +30,7 @@ export async function GET(req: Request) {
       typeLabel: '팀',
       id: t.id,
       title: t.name,
-      subtitle: `팀장 ${t.lead} · ${STATUS_LABEL[t.status as keyof typeof STATUS_LABEL] ?? t.status}`,
+      subtitle: `팀장 ${t.lead}${t.department ? ` · ${t.department}` : ''}`,
       href: '/overview',
     })
 

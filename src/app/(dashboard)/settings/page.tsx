@@ -18,7 +18,7 @@ export default async function SettingsPage() {
         })
       : Promise.resolve([]),
     canManage
-      ? prisma.team.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, lead: true, status: true, department: true } })
+      ? prisma.team.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, lead: true, department: true } })
       : Promise.resolve([]),
   ])
 

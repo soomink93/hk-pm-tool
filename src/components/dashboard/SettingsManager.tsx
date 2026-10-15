@@ -6,16 +6,14 @@ import { Plus, Pencil, X, KeyRound, Users, Building2, RotateCcw } from 'lucide-r
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
-import { STATUS_LABEL } from '@/lib/constants'
-
 type Role = 'admin' | 'chairman' | 'president' | 'executive' | 'teamlead'
 const ROLE_LABEL: Record<string, string> = { admin: '관리자', chairman: '회장님', president: '사장', executive: '임원', teamlead: '팀장' }
 
 export type UserRow = { id: string; name: string; email: string; role: string; team: string | null; department: string | null }
-export type TeamRow = { id: string; name: string; lead: string; status: string; department: string | null }
+export type TeamRow = { id: string; name: string; lead: string; department: string | null }
 
 const emptyUser = { name: '', email: '', role: 'teamlead' as Role, team: '', department: '', password: '' }
-const emptyTeam = { name: '', lead: '', status: 'green', department: '' }
+const emptyTeam = { name: '', lead: '', department: '' }
 
 export function SettingsManager({
   users,
@@ -102,7 +100,7 @@ export function SettingsManager({
   }
   function openEditTeam(t: TeamRow) {
     setTeamEditId(t.id)
-    setTeamForm({ name: t.name, lead: t.lead, status: t.status, department: t.department ?? '' })
+    setTeamForm({ name: t.name, lead: t.lead, department: t.department ?? '' })
     setTeamOpen(true)
   }
   async function saveTeam() {
@@ -200,8 +198,7 @@ export function SettingsManager({
                 <div className="flex-1">
                   <div className="text-[13px] font-bold">{t.name}</div>
                   <div className="text-xs text-slate-400">
-                    팀장: {t.lead} · {STATUS_LABEL[t.status as keyof typeof STATUS_LABEL] ?? t.status}
-                    {t.department ? ` · ${t.department}` : ''}
+                    팀장: {t.lead}{t.department ? ` · ${t.department}` : ''}
                   </div>
                 </div>
                 <button onClick={() => openEditTeam(t)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-navy-light" aria-label="수정">
@@ -290,14 +287,6 @@ export function SettingsManager({
         </Field>
         <Field label="소속 부문">
           <input className={inputClass} list="dept-list" value={teamForm.department} onChange={(e) => setTeamForm({ ...teamForm, department: e.target.value })} placeholder="예) 기술연구소" />
-        </Field>
-        <Field label="상태">
-          <select className={inputClass} value={teamForm.status} onChange={(e) => setTeamForm({ ...teamForm, status: e.target.value })}>
-            <option value="green">정상 진행</option>
-            <option value="yellow">지연 위험</option>
-            <option value="red">지연 중</option>
-            <option value="gray">미제출</option>
-          </select>
         </Field>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setTeamOpen(false)}>취소</Button>

@@ -1,19 +1,5 @@
 // PoC company_dashboard.html:370-373, :343-350 의 라벨/색/탭 정의 이식
 
-export const STATUS_LABEL = {
-  green: '정상 진행',
-  yellow: '지연 위험',
-  red: '지연 중',
-  gray: '미제출',
-} as const
-
-export const STATUS_BADGE = {
-  green: 'badge-green',
-  yellow: 'badge-yellow',
-  red: 'badge-red',
-  gray: 'badge-gray',
-} as const
-
 export const PRIO_LABEL = {
   high: '높음',
   mid: '중간',

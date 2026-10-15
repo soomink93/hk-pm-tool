@@ -120,37 +120,6 @@ export function TrendBars({ items }: { items: { label: string; now: number; prev
   )
 }
 
-// ── 팀 상태 보드 ──
-const TEAM_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-  green: { label: '정상', color: '#2E8540', bg: '#EAF6EC' },
-  yellow: { label: '주의', color: '#B7791F', bg: '#FEF6E7' },
-  red: { label: '지연', color: '#C00000', bg: '#FDECEC' },
-  gray: { label: '미정', color: '#64748b', bg: '#F1F5F9' },
-}
-
-export function TeamStatusGrid({ teams }: { teams: { name: string; lead: string; status: string }[] }) {
-  if (teams.length === 0) return <p className="py-6 text-center text-[13px] text-slate-400">등록된 팀이 없습니다.</p>
-  return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-      {teams.map((t) => {
-        const s = TEAM_STATUS[t.status] ?? TEAM_STATUS.gray
-        return (
-          <div key={t.name} className="rounded-lg border border-line px-3 py-2.5">
-            <div className="flex items-center justify-between">
-              <span className="truncate text-[13px] font-bold text-navy">{t.name}</span>
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <span className="truncate text-[11px] text-slate-400">{t.lead}</span>
-              <span className="rounded px-1.5 py-0.5 text-[10px] font-bold" style={{ color: s.color, background: s.bg }}>{s.label}</span>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 export function ProjectsSummary({ projects }: { projects: { id: string; name: string; done: number; total: number }[] }) {
   if (projects.length === 0) return <p className="py-4 text-center text-[13px] text-slate-400">진행 중 프로젝트 없음</p>
   return (

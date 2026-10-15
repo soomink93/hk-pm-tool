@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { OverviewSummary } from '@/components/dashboard/OverviewSummary'
-import { StatTile, ProgressRing, SegmentBar, TrendBars, TeamStatusGrid, ProjectsSummary } from '@/components/dashboard/OverviewVisuals'
+import { StatTile, ProgressRing, SegmentBar, TrendBars, ProjectsSummary } from '@/components/dashboard/OverviewVisuals'
 import { isUrgent } from '@/lib/helpers'
 import { COLLAB_STATE_LABEL, TASK_STATUS_LABEL } from '@/lib/constants'
 
@@ -23,11 +23,10 @@ const TASK_COLOR: Record<string, string> = {
 }
 
 export default async function OverviewPage() {
-  const [collabs, tasks, escalations, teamRows] = await Promise.all([
+  const [collabs, tasks, escalations] = await Promise.all([
     prisma.collaboration.findMany({ orderBy: { updatedAt: 'desc' } }),
     prisma.task.findMany({ orderBy: { dueDate: 'asc' } }),
     prisma.escalation.findMany({ orderBy: { deadline: 'asc' } }),
-    prisma.team.findMany({ orderBy: { name: 'asc' }, select: { name: true, lead: true, status: true } }),
   ])
 
   const today = new Date().toISOString().slice(0, 10)
@@ -125,12 +124,6 @@ export default async function OverviewPage() {
       <Card>
         <h2 className="mb-3 text-base font-bold text-navy">최근 7일 활동 <span className="text-xs font-normal text-slate-400">(지난 7일 대비)</span></h2>
         <TrendBars items={trend} />
-      </Card>
-
-      {/* 팀 상태 */}
-      <Card>
-        <h2 className="mb-3 text-base font-bold text-navy">팀 상태</h2>
-        <TeamStatusGrid teams={teamRows} />
       </Card>
 
       {/* 진행 중 프로젝트 */}

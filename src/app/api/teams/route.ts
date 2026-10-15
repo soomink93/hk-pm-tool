@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import type { TeamStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { guard } from '@/lib/api-guard'
 import { logAudit } from '@/lib/audit'
@@ -24,7 +23,6 @@ export async function POST(req: Request) {
       name,
       lead: String(b.lead ?? ''),
       department: String(b.department ?? '') || null,
-      status: (b.status ?? 'gray') as TeamStatus,
       risk: String(b.risk ?? '없음'),
       escalation: String(b.escalation ?? '없음'),
       submitted: false,

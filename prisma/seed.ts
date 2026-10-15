@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient, Role, TeamStatus } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -28,11 +28,11 @@ async function main() {
   }
 
   const teams = [
-    { name: "영업팀",   lead: "김민준", status: TeamStatus.green,  submitted: true,  risk: "없음", escalation: "없음" },
-    { name: "마케팅팀", lead: "이서연", status: TeamStatus.yellow, submitted: true,  risk: "Q2 캠페인 일정 지연 위험", escalation: "없음" },
-    { name: "인사팀",   lead: "박지호", status: TeamStatus.gray,   submitted: false, risk: "—", escalation: "—" },
-    { name: "재무팀",   lead: "최수아", status: TeamStatus.red,    submitted: true,  risk: "Q2 예산 초과 가능성", escalation: "하반기 예산 재편성 승인 필요" },
-    { name: "운영팀",   lead: "정태양", status: TeamStatus.green,  submitted: true,  risk: "없음", escalation: "없음" },
+    { name: "영업팀",   lead: "김민준", submitted: true,  risk: "없음", escalation: "없음" },
+    { name: "마케팅팀", lead: "이서연", submitted: true,  risk: "Q2 캠페인 일정 지연 위험", escalation: "없음" },
+    { name: "인사팀",   lead: "박지호", submitted: false, risk: "—", escalation: "—" },
+    { name: "재무팀",   lead: "최수아", submitted: true,  risk: "Q2 예산 초과 가능성", escalation: "하반기 예산 재편성 승인 필요" },
+    { name: "운영팀",   lead: "정태양", submitted: true,  risk: "없음", escalation: "없음" },
   ];
   for (const t of teams) {
     await prisma.team.upsert({ where: { name: t.name }, update: {}, create: t });

@@ -14,13 +14,6 @@ enum Role {
   teamlead
 }
 
-enum TeamStatus {
-  green
-  yellow
-  red
-  gray
-}
-
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -40,7 +33,6 @@ model Team {
   name       String     @unique
   lead       String
   department String?
-  status     TeamStatus @default(gray)
   submitted  Boolean    @default(false)
   risk       String     @default("없음")
   escalation String     @default("없음")
