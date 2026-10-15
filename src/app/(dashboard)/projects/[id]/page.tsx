@@ -8,6 +8,7 @@ import { can, isFullEditor, canEditProject, type Role } from '@/lib/rbac'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { ProjectStatusControl } from '@/components/dashboard/ProjectStatusControl'
+import { ProjectDueControl } from '@/components/dashboard/ProjectDueControl'
 import { TaskBoard } from '@/components/dashboard/TaskBoard'
 import { CollaborationManager } from '@/components/dashboard/CollaborationManager'
 import { EscalationManager } from '@/components/dashboard/EscalationManager'
@@ -92,8 +93,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               : <Badge tone={meta.tone}>{meta.label}</Badge>}
           </div>
           {project.description && <p className="mt-1.5 whitespace-pre-wrap text-[13px] text-slate-500">{project.description}</p>}
-          <div className="mt-2 text-[12px] text-slate-400">
-            담당 {project.ownerName || '미지정'}{project.dueDate ? ` · 마감 ${project.dueDate}` : ''}
+          <div className="mt-2 flex flex-wrap items-center gap-x-1 text-[12px] text-slate-400">
+            <span>담당 {project.ownerName || '미지정'} ·</span>
+            {canEditProj
+              ? <ProjectDueControl projectId={id} dueDate={project.dueDate} />
+              : <span>{project.dueDate ? `마감 ${project.dueDate}` : '마감 미정'}</span>}
           </div>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div className="h-full rounded-full bg-navy-light" style={{ width: `${progress}%` }} />
