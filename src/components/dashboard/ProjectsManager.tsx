@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, Field, inputClass } from '@/components/ui/Modal'
+import { ProjectStatusControl } from '@/components/dashboard/ProjectStatusControl'
 import { canEditProject, type Role } from '@/lib/rbac'
 
 export type ProjectRow = {
@@ -130,7 +131,9 @@ export function ProjectsManager({
                   <Link href={`/projects/${p.id}`} className="flex items-center gap-1.5 text-[14px] font-bold text-navy hover:underline">
                     <FolderKanban size={15} className="shrink-0 text-navy-light" />{p.name}
                   </Link>
-                  <Badge tone={meta.tone}>{meta.label}</Badge>
+                  {canEditProjectRow(p.ownerId)
+                    ? <ProjectStatusControl projectId={p.id} status={p.status} />
+                    : <Badge tone={meta.tone}>{meta.label}</Badge>}
                 </div>
                 <div className="mt-1 text-[11px] text-slate-400">담당 {p.ownerName || '미지정'}{p.dueDate ? ` · 마감 ${p.dueDate}` : ''}</div>
                 {p.teams.length > 0 && (
