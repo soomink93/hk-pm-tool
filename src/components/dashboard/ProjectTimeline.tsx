@@ -11,7 +11,7 @@ const COLOR: Record<string, string> = { todo: '#94A3B8', in_progress: '#E0A106',
 const DAY = 86_400_000
 const ts = (s: string) => Date.parse(s)
 
-type Row = { id: string; title: string; status: string; start: string; dueDate: string; editable: boolean }
+type Row = { id: string; title: string; status: string; start: string; dueDate: string; baselineDue: string | null; editable: boolean }
 
 export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDue?: string }) {
   const router = useRouter()
@@ -54,10 +54,14 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
   const pos = (t: number) => ((t - min) / span) * 100
   const todayP = pos(todayTs)
   const delayOf = (due: string) => Math.round((todayTs - ts(due)) / DAY)
+  const projectDueP = projectDue ? pos(ts(projectDue)) : null
 
-  // 지연 요약
+  // 지연(오늘 기준 초과) 요약
   const overdueRows = rows.filter((t) => ts(t.dueDate) < todayTs && t.status !== 'done')
   const maxDelay = overdueRows.reduce((m, t) => Math.max(m, delayOf(t.dueDate)), 0)
+  // 일정 재조정(최초 계획보다 마감이 뒤로 밀림) 요약
+  const pushRows = rows.filter((t) => t.baselineDue && ts(t.dueDate) > ts(t.baselineDue))
+  const maxPush = pushRows.reduce((m, t) => Math.max(m, Math.round((ts(t.dueDate) - ts(t.baselineDue!)) / DAY)), 0)
 
   // 월 눈금
   const ticks: { p: number; label: string }[] = []
@@ -71,10 +75,19 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
 
   return (
     <div>
-      {/* 지연 요약 */}
-      {overdueRows.length > 0 && (
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1 text-[11px] font-bold text-[#C00000]">
-          지연 {overdueRows.length}건 · 최대 {maxDelay}일 밀림
+      {/* 요약 배지 */}
+      {(overdueRows.length > 0 || pushRows.length > 0) && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {overdueRows.length > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2.5 py-1 text-[11px] font-bold text-[#C00000]">
+              지연 {overdueRows.length}건 · 최대 {maxDelay}일 밀림
+            </span>
+          )}
+          {pushRows.length > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-[#B45309]">
+              일정 재조정 {pushRows.length}건 · 계획 대비 최대 {maxPush}일
+            </span>
+          )}
         </div>
       )}
 
@@ -85,6 +98,9 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
           {ticks.map((t, i) => (
             <span key={i} className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] text-slate-400" style={{ left: `${t.p}%` }}>{t.label}</span>
           ))}
+          {projectDueP !== null && projectDueP >= 0 && projectDueP <= 100 && (
+            <span className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-[#7C3AED]" style={{ left: `${projectDueP}%` }}>마감</span>
+          )}
         </div>
         <span className="w-12 shrink-0" />
       </div>
@@ -92,14 +108,20 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
       <div className="space-y-1.5">
         {rows.map((t) => {
           const s = t.start ? ts(t.start) : ts(t.dueDate)
-          const e = ts(t.dueDate)
-          const overdue = e < todayTs && t.status !== 'done'
+          const cur = ts(t.dueDate)
+          const base = t.baselineDue ? ts(t.baselineDue) : cur
+          const pushed = cur > base // 계획보다 마감이 뒤로 밀림
+          const overdue = cur < todayTs && t.status !== 'done'
           const delay = overdue ? delayOf(t.dueDate) : 0
+          const pushDays = pushed ? Math.round((cur - base) / DAY) : 0
           const color = overdue ? '#C00000' : COLOR[t.status] ?? '#94A3B8'
-          const planLeft = pos(Math.min(s, e))
-          const planRight = pos(Math.max(s, e))
-          const planWidth = Math.max(2, planRight - planLeft)
-          const tailWidth = overdue ? Math.max(0, todayP - planRight) : 0
+
+          const planLeft = pos(s)
+          const solidRight = pos(Math.min(base, cur)) // 계획 구간 끝(= baseline, 밀렸으면)
+          const curP = pos(cur)
+          const planWidth = Math.max(2, solidRight - planLeft)
+          const pushWidth = pushed ? Math.max(0, curP - solidRight) : 0
+          const tailWidth = overdue ? Math.max(0, todayP - curP) : 0
           return (
             <div
               key={t.id}
@@ -112,23 +134,37 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
                 {ticks.map((tk, j) => (
                   <span key={j} className="absolute inset-y-0 w-px bg-slate-200" style={{ left: `${tk.p}%` }} />
                 ))}
+                {/* 프로젝트 마감선 */}
+                {projectDueP !== null && projectDueP >= 0 && projectDueP <= 100 && (
+                  <span className="absolute inset-y-0 z-10 w-0.5 bg-[#7C3AED] opacity-70" style={{ left: `${projectDueP}%` }} title={`프로젝트 마감 ${projectDue}`} />
+                )}
                 <span className="absolute inset-y-0 z-10 w-0.5 bg-navy-light" style={{ left: `${todayP}%` }} title="오늘" />
-                {/* 계획 막대 (시작~마감) */}
-                <span className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2 rounded-full" style={{ left: `${planLeft}%`, width: `${planWidth}%`, background: color }} />
-                {/* 지연 꼬리 (마감~오늘, 빗금) */}
+                {/* 계획 막대 (시작~최초 계획 마감) */}
+                <span className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2 rounded-l-full" style={{ left: `${planLeft}%`, width: `${planWidth}%`, background: color, borderRadius: pushed || (overdue && tailWidth > 0.3) ? '7px 0 0 7px' : '7px' }} />
+                {/* 재조정 구간 (최초 계획~현재 마감, 주황 빗금) */}
+                {pushed && pushWidth > 0.3 && (
+                  <span
+                    className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2"
+                    style={{ left: `${solidRight}%`, width: `${pushWidth}%`, background: 'repeating-linear-gradient(45deg, #E0A106 0 5px, #F6D98A 5px 10px)' }}
+                    title={`최초 계획 ${t.baselineDue} → 현재 마감 ${t.dueDate} (${pushDays}일 미뤄짐)`}
+                  />
+                )}
+                {/* 지연 꼬리 (현재 마감~오늘, 빨강 빗금) */}
                 {overdue && tailWidth > 0.3 && (
                   <span
                     className="absolute top-1/2 z-20 h-3.5 -translate-y-1/2 rounded-r-full"
-                    style={{ left: `${planRight}%`, width: `${tailWidth}%`, background: 'repeating-linear-gradient(45deg, #C00000 0 5px, #F4B4B4 5px 10px)' }}
-                    title={`마감 ${t.dueDate} 대비 ${delay}일 지연`}
+                    style={{ left: `${curP}%`, width: `${tailWidth}%`, background: 'repeating-linear-gradient(45deg, #C00000 0 5px, #F4B4B4 5px 10px)' }}
+                    title={`현재 마감 ${t.dueDate} 대비 ${delay}일 지연`}
                   />
                 )}
-                {/* 마감 기준선 */}
-                {overdue && (
-                  <span className="absolute top-1/2 z-30 h-4 w-0.5 -translate-y-1/2 bg-[#7A0000]" style={{ left: `${planRight}%` }} title={`원래 마감 ${t.dueDate}`} />
+                {/* 최초 계획 마감 기준선 */}
+                {pushed && (
+                  <span className="absolute top-1/2 z-30 h-4 w-0.5 -translate-y-1/2 bg-[#475569]" style={{ left: `${solidRight}%` }} title={`최초 계획 마감 ${t.baselineDue}`} />
                 )}
               </div>
-              <span className="w-12 shrink-0 text-right text-[10px] font-semibold" style={{ color }}>{overdue ? `+${delay}일` : t.dueDate.slice(5)}</span>
+              <span className="w-12 shrink-0 text-right text-[10px] font-semibold" style={{ color: overdue ? '#C00000' : pushed ? '#B45309' : color }}>
+                {overdue ? `+${delay}일` : pushed ? `▶${pushDays}일` : t.dueDate.slice(5)}
+              </span>
             </div>
           )
         })}
@@ -138,7 +174,10 @@ export function ProjectTimeline({ tasks, projectDue }: { tasks: Row[]; projectDu
         <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: '#94A3B8' }} />할 일</span>
         <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: '#E0A106' }} />진행 중</span>
         <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: '#2E8540' }} />완료</span>
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: 'repeating-linear-gradient(45deg, #E0A106 0 3px, #F6D98A 3px 6px)' }} />재조정(미뤄짐)</span>
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-4 rounded" style={{ background: 'repeating-linear-gradient(45deg, #C00000 0 3px, #F4B4B4 3px 6px)' }} />지연</span>
         <span className="inline-flex items-center gap-1"><span className="h-3 w-0.5 bg-navy-light" />오늘</span>
+        {projectDue && <span className="inline-flex items-center gap-1"><span className="h-3 w-0.5 bg-[#7C3AED]" />프로젝트 마감</span>}
         {undated > 0 && <span className="ml-auto">마감 미정 {undated}건</span>}
       </div>
 

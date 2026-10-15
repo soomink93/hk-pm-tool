@@ -165,6 +165,7 @@ model Task {
   status        TaskStatus @default(todo)
   priority      String     @default("mid")
   dueDate       String     @default("")
+  baselineDue   String?    // 최초 계획 마감 — 마감을 수정해도 유지(밀림 비교용)
   createdById   String
   createdByName String
   collaborationId String?

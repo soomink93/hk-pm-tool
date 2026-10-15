@@ -116,6 +116,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               id: t.id,
               title: t.title,
               dueDate: t.dueDate,
+              baselineDue: t.baselineDue,
               status: t.status,
               start: t.createdAt.toISOString().slice(0, 10),
               editable: editable === 'all' || editable.includes(t.team),

@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       status,
       priority: String(b.priority ?? 'mid'),
       dueDate: String(b.dueDate ?? ''),
+      baselineDue: String(b.dueDate ?? '') || null, // 최초 계획 마감 고정
       createdById: userId,
       createdByName: name ?? '',
     },

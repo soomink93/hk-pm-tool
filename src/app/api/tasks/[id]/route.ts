@@ -72,7 +72,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data.assignee = String(b.assignee)
   }
   if (b.priority !== undefined) data.priority = String(b.priority)
-  if (b.dueDate !== undefined) data.dueDate = String(b.dueDate)
+  if (b.dueDate !== undefined) {
+    data.dueDate = String(b.dueDate)
+    // baseline은 한 번만 기록(수정해도 유지). 아직 없으면 첫 마감을 계획으로.
+    if (!task.baselineDue && String(b.dueDate)) data.baselineDue = String(b.dueDate)
+  }
   if (b.status !== undefined && STATUSES.includes(b.status)) data.status = b.status as TaskStatus
   // 팀 이동은 새 팀도 수정 권한 내여야 함
   if (b.team !== undefined && String(b.team) !== task.team) {
