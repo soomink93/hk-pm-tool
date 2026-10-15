@@ -34,7 +34,27 @@ async function run() {
 
   if (toCreate.length) await prisma.notification.createMany({ data: toCreate })
 
-  return { keepAlive: true, reminders: toCreate.length, overdue: overdue.length }
+  // ③ 미착수(할일) 방치 리마인더 — 배정됐지만 3일 이상 '할 일'에 머문 작업 (지연 건은 ②에서 처리)
+  const STALE_DAYS = 3
+  const staleCut = new Date(Date.now() - STALE_DAYS * 86_400_000)
+  const staleTodo = await prisma.task.findMany({
+    where: { status: 'todo', assigneeId: { not: null }, createdAt: { lt: staleCut } },
+    select: { title: true, dueDate: true, assigneeId: true },
+  })
+  const staleCreate = staleTodo
+    .filter((t) => !t.dueDate || t.dueDate >= today) // 이미 지연이면 ②에서 알림
+    .map((t) => ({
+      recipientUserId: t.assigneeId!,
+      fromTeam: '',
+      toTeam: '',
+      content: `미착수 작업: ${t.title} — 시작하거나 일정을 조정하세요`,
+      kind: 'reminder',
+      href: '/my-tasks',
+    }))
+    .filter((n) => !seen.has(`${n.recipientUserId}|${n.content}`))
+  if (staleCreate.length) await prisma.notification.createMany({ data: staleCreate })
+
+  return { keepAlive: true, reminders: toCreate.length, overdue: overdue.length, staleTodo: staleCreate.length }
 }
 
 export async function GET(req: Request) {
