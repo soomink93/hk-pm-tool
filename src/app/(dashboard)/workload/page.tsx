@@ -5,7 +5,7 @@ import { WorkloadView } from '@/components/dashboard/WorkloadView'
 
 export const dynamic = 'force-dynamic'
 
-const ALLOWED = ['admin', 'chairman', 'president', 'executive']
+const ALLOWED = ['admin', 'chairman', 'president']
 
 export default async function WorkloadPage() {
   const session = await auth()
