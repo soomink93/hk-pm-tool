@@ -44,7 +44,6 @@ const ALL_ROLES = ['admin', 'chairman', 'president', 'executive', 'teamlead']
 export const TABS = [
   { id: 'calendar', label: '캘린더', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'overview', label: '전체 현황', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
-  { id: 'members', label: '구성원', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'projects', label: '프로젝트', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'roadmap', label: '로드맵', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'orders', label: '수주·생산', roles: ORDERS_RELEASED ? ALL_ROLES : ['admin'] },
@@ -55,7 +54,8 @@ export const TABS = [
   { id: 'tasks', label: '작업', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'escalation', label: '결정 요청', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'decisions', label: '결정 로그', roles: ['admin', 'chairman', 'president', 'executive'] },
-  { id: 'requests', label: '관리자 요청', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'audit', label: '변경 이력', roles: ['admin'] },
+  { id: 'requests', label: '관리자 요청', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
+  { id: 'members', label: '구성원', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
   { id: 'settings', label: '설정', roles: ['admin', 'chairman', 'president', 'executive', 'teamlead'] },
 ] as const
