@@ -18,7 +18,7 @@ type Noti = {
 const KIND_LABEL: Record<string, string> = {
   request: '협업 요청', status: '상태 변경', comment: '새 댓글',
   task: '작업 배정', escalation: '결정 요청', reminder: '마감 리마인더', mention: '멘션', admin_request: '관리자 요청',
-  order_change: '수주 일정 변경 · 업데이트 필요', order_handoff: '수주 · 착수 가능',
+  order_change: '수주 일정 변경 · 업데이트 필요', order_handoff: '수주 · 착수 가능', order_new: '새 수주 등록',
 }
 const KIND_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   request: Handshake,
@@ -31,6 +31,7 @@ const KIND_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   admin_request: Inbox,
   order_change: CalendarClock,
   order_handoff: Factory,
+  order_new: Factory,
 }
 const COLLAB_KINDS = ['request', 'status', 'comment']
 

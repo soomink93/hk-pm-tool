@@ -37,14 +37,14 @@ async function visibleTo(ids: string[]) {
 }
 
 // 팀(팀원+부문 임원) + 지정 담당자 이름 → 알림 (본인 제외). kind: order_change(확인 전까지 유지) | order_handoff
-async function notifyOrderTeams(orderId: string, teams: string[], actorId: string, kind: 'order_change' | 'order_handoff', text: string, names: string[] = []) {
+async function notifyOrderTeams(orderId: string, teams: string[], actorId: string, kind: 'order_change' | 'order_handoff' | 'order_new', text: string, names: string[] = []) {
   const [ids, named, order] = await Promise.all([
     Promise.all(teams.map(teamStakeholders)),
     names.length ? prisma.user.findMany({ where: { name: { in: names } }, select: { id: true } }) : [],
     prisma.order.findUnique({ where: { id: orderId }, select: { customer: true, product: true } }),
   ])
   const label = order ? `${order.customer} · ${order.product}` : '수주'
-  const title = kind === 'order_change' ? '수주 일정 변경 — 업데이트 필요' : '이전 단계 완료 — 착수 가능'
+  const title = kind === 'order_change' ? '수주 일정 변경 — 업데이트 필요' : kind === 'order_new' ? '새 수주 등록' : '이전 단계 완료 — 착수 가능'
   await notifyUsers(
     await visibleTo([...ids.flat(), ...named.map((u) => u.id)]),
     { kind, content: `${label}: ${text}`, href: href(orderId), email: { subject: `[HK] ${title}: ${label}`, title, lines: [label, text] } },
@@ -93,17 +93,25 @@ export async function createOrder(_prev: { error: string }, f: FormData): Promis
     const type = (str(f, 'productType') in FLOWS ? str(f, 'productType') : 'undecided') as Flow
     const salesTeam = u.team && depts[u.team] === SALES_DEPT ? u.team : undefined
     const file = await readFile(f)
+    const planned = planStages(type, start, o.dueDate || undefined, salesTeam)
     const order = await prisma.order.create({
       data: {
         ...o,
         productType: type,
         createdBy: u.name,
-        stages: { create: planStages(type, start, o.dueDate || undefined, salesTeam).map((s) => ({ ...s, baseStart: s.start, baseEnd: s.end })) },
+        stages: { create: planned.map((s) => ({ ...s, baseStart: s.start, baseEnd: s.end })) },
         logs: { create: { kind: 'change', actor: u.name, text: `수주 등록 · ${FLOW_LABEL[type]}${file ? ` (첨부: ${file.name})` : ''}` } },
         ...(file && { files: { create: { ...file, uploadedBy: u.name } } }),
       },
     })
     orderId = order.id
+    // 담당부서(전 단계 팀) 자동 알림 — 새 수주 등록 (실패해도 등록은 성공 유지)
+    try {
+      const teams = [...new Set(planned.map((s) => s.team).filter(Boolean))]
+      await notifyOrderTeams(order.id, teams, u.id, 'order_new', `새 수주가 등록되었습니다 (${FLOW_LABEL[type]}). 담당 단계를 확인하세요.`)
+    } catch (ne) {
+      console.error('order new-notify failed:', (ne as Error).name)
+    }
   } catch (e) {
     console.error('createOrder failed:', (e as Error).name)
     return { error: e instanceof Error && /[가-힣]/.test(e.message) ? e.message : '등록에 실패했습니다. 입력값을 확인하거나 잠시 후 다시 시도하세요.' }
