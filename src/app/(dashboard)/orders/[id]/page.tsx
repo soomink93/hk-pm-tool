@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Gantt, stageBar } from '@/components/orders/Gantt'
 import { StageTable } from '@/components/orders/StageTable'
 import { OrderForm } from '@/components/orders/OrderForm'
+import { CompressedFileInput } from '@/components/orders/CompressedFileInput'
 import { ConfirmButton } from '@/components/orders/ConfirmButton'
 import { TypeBadge, DelayBadge } from '@/components/orders/badges'
 import { ackChanges, addComment, deleteFile, deleteOrder, setOrderStatus, setProductType, updateOrder, uploadFile } from '../actions'
@@ -138,10 +139,10 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             {!o.files.length && <li className="text-slate-400">없음</li>}
           </ul>
           <form action={uploadFile.bind(null, o.id)} className="no-print mt-2 flex items-center gap-2">
-            <input type="file" name="file" required className="min-w-0 flex-1 text-[12px]" />
+            <CompressedFileInput name="file" required className="min-w-0 flex-1 text-[12px]" />
             <Button type="submit" variant="ghost">올리기</Button>
           </form>
-          <p className="mt-1 text-[11px] text-slate-400">파일당 4MB 이하</p>
+          <p className="mt-1 text-[11px] text-slate-400">이미지는 업로드 전 자동 압축 · 그 외 파일은 4MB 이하</p>
         </Card>
       </div>
 

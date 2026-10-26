@@ -2,6 +2,7 @@ import type { Order } from '@prisma/client'
 import { Field, inputClass } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { FLOWS, FLOW_LABEL, type Flow } from '@/lib/orders/stages'
+import { CompressedFileInput } from './CompressedFileInput'
 
 type Values = Partial<Pick<Order, 'customer' | 'product' | 'orderNo' | 'quantity' | 'dueDate' | 'specialTerms' | 'notes' | 'productType'>>
 
@@ -35,7 +36,7 @@ export function OrderForm({ action, values, submit, isNew }: { action: (f: FormD
           <textarea name="specialTerms" rows={5} defaultValue={values?.specialTerms} placeholder="예: 고객 지정 도장색, 인증 요구, 사양 변경 조건, 지체상금…" className={inputClass} />
         </Field>
         <Field label="비고"><textarea name="notes" rows={2} defaultValue={values?.notes} className={inputClass} /></Field>
-        {isNew && <Field label="원본 첨부 (기안서/계약서, 4MB 이하)"><input type="file" name="file" className="text-[12px]" /></Field>}
+        {isNew && <Field label="원본 첨부 (기안서/계약서 · 이미지는 자동 압축)"><CompressedFileInput name="file" className="text-[12px]" /></Field>}
       </div>
       {isNew && <p className="text-[12px] text-slate-400 sm:col-span-2">등록하면 납기에 맞춰 단계별 일정이 자동 배분됩니다(검사(QC)는 최소 4일). 이후 자유롭게 수정하세요.</p>}
       <div className="mt-2 sm:col-span-2"><Button type="submit">{submit}</Button></div>
