@@ -64,12 +64,12 @@ function actualDates(s: { status: StageStatus; startedAt: string | null; doneAt:
 }
 
 // 금액은 민감정보라 보관하지 않음
-const ORDER_FIELDS = { orderNo: '수주번호', customer: '고객사', product: '품목', quantity: '수량', dueDate: '납기', specialTerms: '특약사항', notes: '비고' } as const
+const ORDER_FIELDS = { orderNo: '수주번호', customer: '고객사', product: '모델', laserSource: '발진기', head: '헤드', headModel: '헤드 모델', dueDate: '납기', specialTerms: '특약사항', notes: '비고' } as const
 type OrderField = keyof typeof ORDER_FIELDS
 
 function readOrder(f: FormData) {
   const o = Object.fromEntries(Object.keys(ORDER_FIELDS).map((k) => [k, str(f, k)])) as Record<OrderField, string>
-  if (!o.customer || !o.product) fail('고객사와 품목은 필수입니다.')
+  if (!o.customer || !o.product) fail('고객사와 모델은 필수입니다.')
   if (o.dueDate && !isDate(o.dueDate)) fail('납기 형식이 올바르지 않습니다.')
   return o
 }

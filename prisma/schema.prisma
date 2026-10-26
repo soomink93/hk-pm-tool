@@ -289,8 +289,11 @@ model Order {
   id           String      @id @default(cuid())
   orderNo      String      @default("") // 수주번호
   customer     String // 고객사
-  product      String // 품목
-  quantity     String      @default("")
+  product      String // 모델명 (UI: 모델)
+  laserSource  String      @default("") // 발진기 (Raycus/IPG/nLight…)
+  head         String      @default("") // 헤드 (Precitec/Bochu/Raytools…)
+  headModel    String      @default("") // 헤드 모델 (예: Procutter 2.0)
+  quantity     String      @default("") // (구) 수량 — 폼에서는 제거, 기존 데이터 보존
   dueDate      String      @default("") // 계약 납기
   specialTerms String      @default("") // 특약사항
   notes        String      @default("")

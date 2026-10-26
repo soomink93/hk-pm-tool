@@ -7,13 +7,14 @@ import { OrderForm } from '@/components/orders/OrderForm'
 import { Button } from '@/components/ui/Button'
 import { inputClass } from '@/components/ui/Modal'
 import { compressImage } from '@/lib/imageCompress'
+import type { OrderOpts } from '@/lib/orders/options'
 
-type Fields = { customer: string; product: string; orderNo: string; quantity: string; dueDate: string; specialTerms: string }
+type Fields = { customer: string; product: string; laserSource: string; head: string; headModel: string; orderNo: string; dueDate: string; specialTerms: string }
 
 // 수주 등록 + PDF 자동입력.
 // ① PDF 선택 → 서버에서 텍스트 추출·금액/개인정보 마스킹 (외부 전송 없음)
 // ② 사용자가 마스킹 결과 확인(수정 가능) → 동의 시에만 AI로 전송 → 폼 채움
-export function NewOrder({ aiEnabled }: { aiEnabled: boolean }) {
+export function NewOrder({ aiEnabled, opts }: { aiEnabled: boolean; opts: OrderOpts }) {
   const file = useRef<File | null>(null)
   const [preview, setPreview] = useState<{ text: string; count: number } | null>(null)
   const [img, setImg] = useState<File | null>(null)
@@ -99,7 +100,7 @@ export function NewOrder({ aiEnabled }: { aiEnabled: boolean }) {
           {values && <p className="mt-2 text-[12px] text-green-700">아래 칸을 채웠습니다. 특히 특약사항을 원문과 대조해 확인한 뒤 등록하세요.</p>}
         </div>
       )}
-      <OrderForm key={JSON.stringify(values)} action={createAction} values={values ?? undefined} submit="등록" isNew error={createState.error} />
+      <OrderForm key={JSON.stringify(values)} action={createAction} values={values ?? undefined} submit="등록" isNew error={createState.error} opts={opts} />
     </>
   )
 }

@@ -1,0 +1,4 @@
+-- 수주: 발진기·헤드·헤드모델 추가
+ALTER TABLE "Order" ADD COLUMN "laserSource" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Order" ADD COLUMN "head" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Order" ADD COLUMN "headModel" TEXT NOT NULL DEFAULT '';

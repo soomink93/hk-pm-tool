@@ -2,19 +2,37 @@ import type { Order } from '@prisma/client'
 import { Field, inputClass } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { FLOWS, FLOW_LABEL, type Flow } from '@/lib/orders/stages'
+import type { OrderOpts } from '@/lib/orders/options'
 import { CompressedFileInput } from './CompressedFileInput'
+import { HeadFields } from './HeadFields'
 
-type Values = Partial<Pick<Order, 'customer' | 'product' | 'orderNo' | 'quantity' | 'dueDate' | 'specialTerms' | 'notes' | 'productType'>>
+type Values = Partial<Pick<Order, 'customer' | 'product' | 'laserSource' | 'head' | 'headModel' | 'orderNo' | 'dueDate' | 'specialTerms' | 'notes' | 'productType'>>
 
 // 수주기안서/계약서 핵심 필드 (금액은 민감정보라 받지 않음). 등록·수정 공용 (서버 액션 폼)
 // isNew: 등록 화면 — 시작일·원본 첨부 칸 표시
-export function OrderForm({ action, values, submit, isNew, error }: { action: (f: FormData) => void | Promise<void>; values?: Values; submit: string; isNew?: boolean; error?: string }) {
+export function OrderForm({
+  action, values, submit, isNew, error, opts,
+}: {
+  action: (f: FormData) => void | Promise<void>
+  values?: Values
+  submit: string
+  isNew?: boolean
+  error?: string
+  opts: OrderOpts
+}) {
   return (
     <form action={action} className="grid gap-x-4 sm:grid-cols-2">
       <Field label="고객사 *"><input name="customer" required defaultValue={values?.customer} className={inputClass} /></Field>
-      <Field label="품목 *"><input name="product" required defaultValue={values?.product} className={inputClass} /></Field>
+      <Field label="모델 *">
+        <input name="product" list="model-opts" required defaultValue={values?.product} className={inputClass} placeholder="예) FC3015" />
+        <datalist id="model-opts">{opts.models.map((m) => <option key={m} value={m} />)}</datalist>
+      </Field>
+      <Field label="발진기">
+        <input name="laserSource" list="source-opts" defaultValue={values?.laserSource} className={inputClass} placeholder="예) Raycus" />
+        <datalist id="source-opts">{opts.sources.map((s) => <option key={s} value={s} />)}</datalist>
+      </Field>
       <Field label="수주번호"><input name="orderNo" defaultValue={values?.orderNo} className={inputClass} /></Field>
-      <Field label="수량"><input name="quantity" defaultValue={values?.quantity} className={inputClass} /></Field>
+      <HeadFields heads={opts.heads} headModels={opts.headModels} defaultHead={values?.head ?? ''} defaultHeadModel={values?.headModel ?? ''} />
       <Field label={isNew ? "계약 납기" : "계약 납기 (바꾸면 출하가 납기에 맞춰지고 검사(QC)도 같이 이동)"}><input name="dueDate" type="date" defaultValue={values?.dueDate} className={inputClass} /></Field>
       {isNew && <Field label="일정 시작일 (기본: 오늘)"><input name="startDate" type="date" className={inputClass} /></Field>}
       {isNew && (

@@ -11,6 +11,7 @@ import { Gantt, stageBar } from '@/components/orders/Gantt'
 import { StageTable } from '@/components/orders/StageTable'
 import { OrderForm } from '@/components/orders/OrderForm'
 import { CompressedFileInput } from '@/components/orders/CompressedFileInput'
+import { getOrderOpts } from '@/lib/orders/optionsServer'
 import { ConfirmButton } from '@/components/orders/ConfirmButton'
 import { TypeBadge, DelayBadge } from '@/components/orders/badges'
 import { ackChanges, addComment, deleteFile, deleteOrder, setOrderStatus, setProductType, updateOrder, uploadFile } from '../actions'
@@ -24,7 +25,7 @@ const pill = (on: boolean) => `rounded-md px-3 py-1.5 text-xs font-semibold ${on
 const kst = (d: Date) => new Date(d.getTime() + 9 * 3600_000).toISOString().slice(5, 16).replace('T', ' ')
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
-  const [me, depts] = await Promise.all([requireMe(), teamDepts()])
+  const [me, depts, opts] = await Promise.all([requireMe(), teamDepts(), getOrderOpts()])
   const { id } = await params
   const o = await prisma.order.findUnique({
     where: { id },
@@ -93,7 +94,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-4">
-            {[['수주번호', o.orderNo], ['수량', o.quantity], ['계약 납기', o.dueDate], ['등록', `${o.createdBy} · ${kst(o.createdAt).slice(0, 5)}`]].map(([k, v]) => (
+            {[['수주번호', o.orderNo], ['발진기', o.laserSource], ['헤드', [o.head, o.headModel].filter(Boolean).join(' ')], ['계약 납기', o.dueDate], ['등록', `${o.createdBy} · ${kst(o.createdAt).slice(0, 5)}`]].map(([k, v]) => (
               <div key={k}><dt className="text-[11px] font-bold text-slate-400">{k}</dt><dd className="font-semibold">{v || '-'}</dd></div>
             ))}
           </dl>
@@ -105,7 +106,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
           {sales && !isLocked && (
             <details className="no-print mt-3">
               <summary className="cursor-pointer text-xs font-semibold text-navy-light">수주정보 수정 (영업)</summary>
-              <div className="mt-3"><OrderForm action={updateOrder.bind(null, o.id)} values={o} submit="저장" /></div>
+              <div className="mt-3"><OrderForm action={updateOrder.bind(null, o.id)} values={o} submit="저장" opts={opts} /></div>
             </details>
           )}
         </Card>
