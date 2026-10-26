@@ -8,7 +8,7 @@ type Values = Partial<Pick<Order, 'customer' | 'product' | 'orderNo' | 'quantity
 
 // 수주기안서/계약서 핵심 필드 (금액은 민감정보라 받지 않음). 등록·수정 공용 (서버 액션 폼)
 // isNew: 등록 화면 — 시작일·원본 첨부 칸 표시
-export function OrderForm({ action, values, submit, isNew }: { action: (f: FormData) => Promise<void>; values?: Values; submit: string; isNew?: boolean }) {
+export function OrderForm({ action, values, submit, isNew, error }: { action: (f: FormData) => void | Promise<void>; values?: Values; submit: string; isNew?: boolean; error?: string }) {
   return (
     <form action={action} className="grid gap-x-4 sm:grid-cols-2">
       <Field label="고객사 *"><input name="customer" required defaultValue={values?.customer} className={inputClass} /></Field>
@@ -39,6 +39,7 @@ export function OrderForm({ action, values, submit, isNew }: { action: (f: FormD
         {isNew && <Field label="원본 첨부 (기안서/계약서 · 이미지는 자동 압축)"><CompressedFileInput name="file" className="text-[12px]" /></Field>}
       </div>
       {isNew && <p className="text-[12px] text-slate-400 sm:col-span-2">등록하면 납기에 맞춰 단계별 일정이 자동 배분됩니다(검사(QC)는 최소 4일). 이후 자유롭게 수정하세요.</p>}
+      {error && <p className="mt-1 text-[13px] font-semibold text-red-600 sm:col-span-2">{error}</p>}
       <div className="mt-2 sm:col-span-2"><Button type="submit">{submit}</Button></div>
     </form>
   )

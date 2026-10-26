@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
+import { useActionState, useRef, useState, useTransition } from 'react'
 import { Loader2, ShieldCheck, Sparkles } from 'lucide-react'
 import { createOrder, prepareAutofill, runAutofill, runImageAutofill } from '@/app/(dashboard)/orders/actions'
 import { OrderForm } from '@/components/orders/OrderForm'
@@ -20,6 +20,7 @@ export function NewOrder({ aiEnabled }: { aiEnabled: boolean }) {
   const [values, setValues] = useState<Fields | null>(null)
   const [error, setError] = useState('')
   const [pending, start] = useTransition()
+  const [createState, createAction] = useActionState(createOrder, { error: '' })
 
   // 추출한 원본을 아래 '원본 첨부' 칸에 자동으로 넣음
   const putAttach = (f: File) => requestAnimationFrame(() => {
@@ -98,7 +99,7 @@ export function NewOrder({ aiEnabled }: { aiEnabled: boolean }) {
           {values && <p className="mt-2 text-[12px] text-green-700">아래 칸을 채웠습니다. 특히 특약사항을 원문과 대조해 확인한 뒤 등록하세요.</p>}
         </div>
       )}
-      <OrderForm key={JSON.stringify(values)} action={createOrder} values={values ?? undefined} submit="등록" isNew />
+      <OrderForm key={JSON.stringify(values)} action={createAction} values={values ?? undefined} submit="등록" isNew error={createState.error} />
     </>
   )
 }

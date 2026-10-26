@@ -82,27 +82,34 @@ async function readFile(f: FormData) {
   return { name: file.name.slice(0, 200), mime: file.type || 'application/octet-stream', size: file.size, data: new Uint8Array(await file.arrayBuffer()) }
 }
 
-export async function createOrder(f: FormData) {
-  const [u, depts] = await Promise.all([requireMe(), teamDepts()])
-  if (!isSales(u, depts)) fail('수주 등록은 영업 부문만 할 수 있습니다.')
-  const o = readOrder(f)
-  const start = isDate(str(f, 'startDate')) ? str(f, 'startDate') : today()
-  const type = (str(f, 'productType') in FLOWS ? str(f, 'productType') : 'undecided') as Flow
-  // 등록자가 영업 부문 팀장이면 영업접수·출하 담당을 그 팀으로
-  const salesTeam = u.team && depts[u.team] === SALES_DEPT ? u.team : undefined
-  const file = await readFile(f)
-  const order = await prisma.order.create({
-    data: {
-      ...o,
-      productType: type,
-      createdBy: u.name,
-      stages: { create: planStages(type, start, o.dueDate || undefined, salesTeam).map((s) => ({ ...s, baseStart: s.start, baseEnd: s.end })) },
-      logs: { create: { kind: 'change', actor: u.name, text: `수주 등록 · ${FLOW_LABEL[type]}${file ? ` (첨부: ${file.name})` : ''}` } },
-      ...(file && { files: { create: { ...file, uploadedBy: u.name } } }),
-    },
-  })
+// useActionState용: 실패 사유를 {error}로 반환(폼에 표시), 성공 시 redirect(try 밖이라 NEXT_REDIRECT는 그대로 전파)
+export async function createOrder(_prev: { error: string }, f: FormData): Promise<{ error: string }> {
+  let orderId: string
+  try {
+    const [u, depts] = await Promise.all([requireMe(), teamDepts()])
+    if (!isSales(u, depts)) return { error: '수주 등록은 영업 부문만 할 수 있습니다.' }
+    const o = readOrder(f)
+    const start = isDate(str(f, 'startDate')) ? str(f, 'startDate') : today()
+    const type = (str(f, 'productType') in FLOWS ? str(f, 'productType') : 'undecided') as Flow
+    const salesTeam = u.team && depts[u.team] === SALES_DEPT ? u.team : undefined
+    const file = await readFile(f)
+    const order = await prisma.order.create({
+      data: {
+        ...o,
+        productType: type,
+        createdBy: u.name,
+        stages: { create: planStages(type, start, o.dueDate || undefined, salesTeam).map((s) => ({ ...s, baseStart: s.start, baseEnd: s.end })) },
+        logs: { create: { kind: 'change', actor: u.name, text: `수주 등록 · ${FLOW_LABEL[type]}${file ? ` (첨부: ${file.name})` : ''}` } },
+        ...(file && { files: { create: { ...file, uploadedBy: u.name } } }),
+      },
+    })
+    orderId = order.id
+  } catch (e) {
+    console.error('createOrder failed:', (e as Error).name)
+    return { error: e instanceof Error && /[가-힣]/.test(e.message) ? e.message : '등록에 실패했습니다. 입력값을 확인하거나 잠시 후 다시 시도하세요.' }
+  }
   revalidatePath('/orders')
-  redirect(href(order.id))
+  redirect(href(orderId))
 }
 
 export async function updateOrder(id: string, f: FormData) {
