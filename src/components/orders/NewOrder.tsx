@@ -2,10 +2,11 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { Loader2, ShieldCheck, Sparkles } from 'lucide-react'
-import { createOrder, prepareAutofill, runAutofill } from '@/app/(dashboard)/orders/actions'
+import { createOrder, prepareAutofill, runAutofill, runImageAutofill } from '@/app/(dashboard)/orders/actions'
 import { OrderForm } from '@/components/orders/OrderForm'
 import { Button } from '@/components/ui/Button'
 import { inputClass } from '@/components/ui/Modal'
+import { compressImage } from '@/lib/imageCompress'
 
 type Fields = { customer: string; product: string; orderNo: string; quantity: string; dueDate: string; specialTerms: string }
 
@@ -15,14 +16,22 @@ type Fields = { customer: string; product: string; orderNo: string; quantity: st
 export function NewOrder({ aiEnabled }: { aiEnabled: boolean }) {
   const file = useRef<File | null>(null)
   const [preview, setPreview] = useState<{ text: string; count: number } | null>(null)
+  const [img, setImg] = useState<File | null>(null)
   const [values, setValues] = useState<Fields | null>(null)
   const [error, setError] = useState('')
   const [pending, start] = useTransition()
 
+  // 추출한 원본을 아래 '원본 첨부' 칸에 자동으로 넣음
+  const putAttach = (f: File) => requestAnimationFrame(() => {
+    const input = document.querySelector<HTMLInputElement>('form input[name=file]')
+    if (input) { const dt = new DataTransfer(); dt.items.add(f); input.files = dt.files }
+  })
+
   const pick = (f: File | undefined) => {
-    setError(''); setPreview(null)
+    setError(''); setPreview(null); setImg(null)
     if (!f) return
     file.current = f
+    if (f.type.startsWith('image/')) { setImg(f); return } // 이미지 → 동의 단계로
     const fd = new FormData()
     fd.set('file', f)
     start(async () => {
@@ -37,29 +46,43 @@ export function NewOrder({ aiEnabled }: { aiEnabled: boolean }) {
     if ('error' in r) return setError(r.error)
     setValues(r)
     setPreview(null)
-    // 같은 PDF를 원본 첨부 칸에 자동으로 넣음
-    requestAnimationFrame(() => {
-      const input = document.querySelector<HTMLInputElement>('form input[name=file]')
-      if (input && file.current) {
-        const dt = new DataTransfer()
-        dt.items.add(file.current)
-        input.files = dt.files
-      }
-    })
+    if (file.current) putAttach(file.current)
+  })
+
+  const sendImage = () => start(async () => {
+    if (!img) return
+    const small = await compressImage(img) // 전송 전 축소(한도·비용)
+    const fd = new FormData()
+    fd.set('file', small)
+    const r = await runImageAutofill(fd)
+    if ('error' in r) return setError(r.error)
+    setValues(r)
+    setImg(null)
+    file.current = small
+    putAttach(small)
   })
 
   return (
     <>
       {aiEnabled && (
         <div className="mb-5 rounded-lg border border-violet-200 bg-violet-50/60 p-4">
-          <div className="mb-1 flex items-center gap-1.5 text-sm font-bold text-violet-800"><Sparkles size={15} />수주기안서 PDF로 자동 입력</div>
+          <div className="mb-1 flex items-center gap-1.5 text-sm font-bold text-violet-800"><Sparkles size={15} />수주기안서 PDF·이미지로 자동 입력</div>
           <p className="mb-3 flex items-start gap-1 text-[12px] text-slate-600">
             <ShieldCheck size={14} className="mt-0.5 shrink-0 text-green-600" />
-            금액·전화·이메일·사업자번호·계좌는 우리 서버에서 먼저 가린 뒤, 확인을 누른 내용만 AI(Anthropic API)로 보냅니다. 보낸 내용은 AI 학습에 쓰이지 않고, 우리 서버 로그에도 남기지 않습니다.
+            <span><b>PDF</b>는 금액·전화·이메일·사업자번호·계좌를 서버에서 먼저 가린 뒤, 확인한 내용만 AI(Anthropic)로 보냅니다. <b>이미지</b>는 픽셀이라 가릴 수 없어, 동의 시 이미지 전체가 전송됩니다. 특약사항 표(■ 체크 항목)를 자동으로 정리합니다.</span>
           </p>
-          <input type="file" accept="application/pdf,.pdf" disabled={pending} onChange={(e) => pick(e.target.files?.[0])} className="text-[12px]" />
+          <input type="file" accept="application/pdf,.pdf,image/*" disabled={pending} onChange={(e) => pick(e.target.files?.[0])} className="text-[12px]" />
           {pending && <p className="mt-2 flex items-center gap-1 text-[12px] text-slate-500"><Loader2 size={13} className="animate-spin" />처리 중…</p>}
           {error && <p className="mt-2 text-[12px] text-red-600">{error}</p>}
+          {img && !pending && (
+            <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-[12px] text-slate-700">
+              <b className="text-[#B45309]">이미지는 내용을 가릴 수 없습니다.</b> 올린 이미지 <b>전체</b>가 AI(Anthropic)로 전송됩니다. 금액 등 민감정보가 보이면 그 부분을 가리고 다시 찍어 올리세요. 특약사항은 <b>■로 체크된 항목</b>만 정리됩니다.
+              <div className="mt-2 flex gap-2">
+                <Button type="button" onClick={sendImage}>동의하고 AI로 채우기</Button>
+                <Button type="button" variant="ghost" onClick={() => setImg(null)}>취소</Button>
+              </div>
+            </div>
+          )}
           {preview && (
             <div className="mt-3">
               <div className="mb-1 text-[12px] font-semibold text-slate-700">

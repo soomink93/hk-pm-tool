@@ -10,7 +10,7 @@ import { notifyUsers, teamStakeholders } from '@/lib/notify'
 import { parseMentionNames } from '@/lib/mentions'
 import { requireMe, teamDepts } from '@/lib/orders/session'
 import { SALES_DEPT, canEditLocked, canEditStage, canSetType, isSales } from '@/lib/orders/perm'
-import { MAX_FILE, extractFields, isPdf, pdfToRedactedText, type ExtractedFields } from '@/lib/orders/extract'
+import { MAX_FILE, extractFields, extractFieldsFromImage, isPdf, isSupportedImage, pdfToRedactedText, type ExtractedFields } from '@/lib/orders/extract'
 import { DELAY_REASONS, FLOWS, FLOW_LABEL, SHIP_GROUP, addDays, affectedTeams, diffDays, linkedShift, minDaysError, nextStage, planStages, today, type Flow } from '@/lib/orders/stages'
 import type { OrderStatus, ProductType, StageStatus } from '@prisma/client'
 
@@ -315,6 +315,22 @@ export async function prepareAutofill(f: FormData): Promise<{ text: string; coun
     return r
   } catch {
     return { error: 'PDF를 읽지 못했습니다. (암호가 걸렸거나 손상된 파일)' }
+  }
+}
+
+// 이미지 자동입력: 이미지 전체를 Claude 비전으로 전송(픽셀은 사전 마스킹 불가 — 클라이언트에서 동의 받음) → 필드 추출
+export async function runImageAutofill(f: FormData): Promise<ExtractedFields | { error: string }> {
+  const [u, depts] = await Promise.all([requireMe(), teamDepts()])
+  if (!isSales(u, depts)) return { error: '수주 등록은 영업 부문만 할 수 있습니다.' }
+  const file = f.get('file')
+  if (!(file instanceof File) || file.size === 0) return { error: '이미지를 선택하세요.' }
+  if (file.size > MAX_FILE) return { error: '이미지는 4MB 이하만 가능합니다.' }
+  if (!isSupportedImage(file.type)) return { error: 'PNG·JPG·WEBP·GIF 이미지만 가능합니다.' }
+  try {
+    return await extractFieldsFromImage(new Uint8Array(await file.arrayBuffer()), file.type)
+  } catch (e) {
+    console.error('image autofill failed:', (e as Error).name)
+    return { error: e instanceof Error && /[가-힣]/.test(e.message) ? e.message : 'AI 분석에 실패했습니다. 잠시 후 다시 시도하거나 직접 입력하세요.' }
   }
 }
 
