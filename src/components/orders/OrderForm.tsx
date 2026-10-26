@@ -5,8 +5,9 @@ import { FLOWS, FLOW_LABEL, type Flow } from '@/lib/orders/stages'
 import type { OrderOpts } from '@/lib/orders/options'
 import { CompressedFileInput } from './CompressedFileInput'
 import { HeadFields } from './HeadFields'
+import { ModelFields } from './ModelFields'
 
-type Values = Partial<Pick<Order, 'customer' | 'product' | 'laserSource' | 'head' | 'headModel' | 'orderNo' | 'dueDate' | 'specialTerms' | 'notes' | 'productType'>>
+type Values = Partial<Pick<Order, 'customer' | 'product' | 'laserSource' | 'laserPower' | 'head' | 'headModel' | 'orderNo' | 'dueDate' | 'specialTerms' | 'notes' | 'productType'>>
 
 // 수주기안서/계약서 핵심 필드 (금액은 민감정보라 받지 않음). 등록·수정 공용 (서버 액션 폼)
 // isNew: 등록 화면 — 시작일·원본 첨부 칸 표시
@@ -23,15 +24,16 @@ export function OrderForm({
   return (
     <form action={action} className="grid gap-x-4 sm:grid-cols-2">
       <Field label="고객사 *"><input name="customer" required defaultValue={values?.customer} className={inputClass} /></Field>
-      <Field label="모델 *">
-        <input name="product" list="model-opts" required defaultValue={values?.product} className={inputClass} placeholder="예) FC3015" />
-        <datalist id="model-opts">{opts.models.map((m) => <option key={m} value={m} />)}</datalist>
-      </Field>
-      <Field label="발진기">
+      <Field label="수주번호"><input name="orderNo" defaultValue={values?.orderNo} className={inputClass} /></Field>
+      <ModelFields bases={opts.modelBases} sizes={opts.sizes} defaultProduct={values?.product ?? ''} />
+      <Field label="발진기 타입">
         <input name="laserSource" list="source-opts" defaultValue={values?.laserSource} className={inputClass} placeholder="예) Raycus" />
         <datalist id="source-opts">{opts.sources.map((s) => <option key={s} value={s} />)}</datalist>
       </Field>
-      <Field label="수주번호"><input name="orderNo" defaultValue={values?.orderNo} className={inputClass} /></Field>
+      <Field label="발진기 출력">
+        <input name="laserPower" list="power-opts" defaultValue={values?.laserPower} className={inputClass} placeholder="예) 6kW" />
+        <datalist id="power-opts">{opts.powers.map((p) => <option key={p} value={p} />)}</datalist>
+      </Field>
       <HeadFields heads={opts.heads} headModels={opts.headModels} defaultHead={values?.head ?? ''} defaultHeadModel={values?.headModel ?? ''} />
       <Field label={isNew ? "계약 납기" : "계약 납기 (바꾸면 출하가 납기에 맞춰지고 검사(QC)도 같이 이동)"}><input name="dueDate" type="date" defaultValue={values?.dueDate} className={inputClass} /></Field>
       {isNew && <Field label="일정 시작일 (기본: 오늘)"><input name="startDate" type="date" className={inputClass} /></Field>}

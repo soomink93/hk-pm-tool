@@ -9,7 +9,7 @@ import { inputClass } from '@/components/ui/Modal'
 import { compressImage } from '@/lib/imageCompress'
 import type { OrderOpts } from '@/lib/orders/options'
 
-type Fields = { customer: string; product: string; laserSource: string; head: string; headModel: string; orderNo: string; dueDate: string; specialTerms: string }
+type Fields = { customer: string; product: string; laserSource: string; laserPower: string; head: string; headModel: string; orderNo: string; dueDate: string; specialTerms: string }
 
 // 수주 등록 + PDF 자동입력.
 // ① PDF 선택 → 서버에서 텍스트 추출·금액/개인정보 마스킹 (외부 전송 없음)

@@ -64,7 +64,7 @@ function actualDates(s: { status: StageStatus; startedAt: string | null; doneAt:
 }
 
 // 금액은 민감정보라 보관하지 않음
-const ORDER_FIELDS = { orderNo: '수주번호', customer: '고객사', product: '모델', laserSource: '발진기', head: '헤드', headModel: '헤드 모델', dueDate: '납기', specialTerms: '특약사항', notes: '비고' } as const
+const ORDER_FIELDS = { orderNo: '수주번호', customer: '고객사', product: '모델', laserSource: '발진기 타입', laserPower: '발진기 출력', head: '헤드', headModel: '헤드 모델', dueDate: '납기', specialTerms: '특약사항', notes: '비고' } as const
 type OrderField = keyof typeof ORDER_FIELDS
 
 function readOrder(f: FormData) {

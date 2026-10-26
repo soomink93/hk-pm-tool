@@ -22,6 +22,7 @@ const Fields = z.object({
   customer: z.string(),
   product: z.string(),
   laserSource: z.string(),
+  laserPower: z.string(),
   head: z.string(),
   headModel: z.string(),
   orderNo: z.string(),
@@ -36,14 +37,15 @@ const SCHEMA = {
   properties: {
     customer: { type: 'string', description: '고객사(발주처) 이름. 없으면 빈 문자열' },
     product: { type: 'string', description: '모델명/제품명/모델번호 (예: FC3015, HD3015)' },
-    laserSource: { type: 'string', description: '발진기(레이저 소스) 브랜드/모델 (예: Raycus, IPG, nLight). 없으면 빈 문자열' },
+    laserSource: { type: 'string', description: '발진기(레이저 소스) 브랜드 (예: Raycus, IPG, nLight). 없으면 빈 문자열' },
+    laserPower: { type: 'string', description: '발진기 출력(파워). 예: 6kW, 12kW. 없으면 빈 문자열' },
     head: { type: 'string', description: '절단 헤드 브랜드 (예: Precitec, Bochu, Raytools). 없으면 빈 문자열' },
     headModel: { type: 'string', description: '헤드의 세부 모델명 (예: Procutter 2.0). 없으면 빈 문자열' },
     orderNo: { type: 'string', description: '수주번호/계약번호/문서번호' },
     dueDate: { type: 'string', description: '납기일 YYYY-MM-DD. 날짜가 명확하지 않으면 빈 문자열' },
     specialTerms: { type: 'string', description: '특약사항 전체. 항목마다 줄바꿈, 원문 표현 유지' },
   },
-  required: ['customer', 'product', 'laserSource', 'head', 'headModel', 'orderNo', 'dueDate', 'specialTerms'],
+  required: ['customer', 'product', 'laserSource', 'laserPower', 'head', 'headModel', 'orderNo', 'dueDate', 'specialTerms'],
   additionalProperties: false,
 } as const
 

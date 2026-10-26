@@ -1,6 +1,8 @@
 // 수주 콤보박스(datalist) 기본값 + 사용 이력 병합. 한번 쓴 값은 다음에 목록에 남음.
-export const MODEL_SEED = ['FC3015', 'HD3015', 'FS3015', 'K315']
+export const MODEL_BASE_SEED = ['FC', 'HD', 'FS', 'RS', 'K315'] // 모델 베이스(계열)
+export const SIZE_SEED = ['3015', '4020', '3020', '4015', '6020', '8025'] // 모델 사이즈
 export const SOURCE_SEED = ['Raycus', 'IPG', 'nLight']
+export const POWER_SEED = ['1kW', '2kW', '3kW', '4kW', '6kW', '8kW', '12kW', '15kW', '20kW', '30kW']
 export const HEAD_SEED = ['Precitec', 'Bochu', 'Raytools']
 export const HEAD_MODEL_SEED: Record<string, string[]> = {
   Precitec: ['Procutter 2.0'],
@@ -24,8 +26,10 @@ export function buildHeadModelMap(rows: { head: string; headModel: string }[]): 
 }
 
 export type OrderOpts = {
-  models: string[]
+  modelBases: string[]
+  sizes: string[]
   sources: string[]
+  powers: string[]
   heads: string[]
   headModels: Record<string, string[]>
 }

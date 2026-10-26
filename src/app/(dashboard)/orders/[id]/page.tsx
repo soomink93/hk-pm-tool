@@ -94,7 +94,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-4">
-            {[['수주번호', o.orderNo], ['발진기', o.laserSource], ['헤드', [o.head, o.headModel].filter(Boolean).join(' ')], ['계약 납기', o.dueDate], ['등록', `${o.createdBy} · ${kst(o.createdAt).slice(0, 5)}`]].map(([k, v]) => (
+            {[['수주번호', o.orderNo], ['발진기', [o.laserSource, o.laserPower].filter(Boolean).join(' ')], ['헤드', [o.head, o.headModel].filter(Boolean).join(' ')], ['계약 납기', o.dueDate], ['등록', `${o.createdBy} · ${kst(o.createdAt).slice(0, 5)}`]].map(([k, v]) => (
               <div key={k}><dt className="text-[11px] font-bold text-slate-400">{k}</dt><dd className="font-semibold">{v || '-'}</dd></div>
             ))}
           </dl>
