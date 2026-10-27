@@ -46,7 +46,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     prisma.user.findMany({ select: { name: true, team: true }, orderBy: { name: 'asc' } }),
     prisma.notification.findMany({ where: { recipientUserId: me.id, href, kind: 'order_change', read: false }, orderBy: { createdAt: 'desc' } }),
     prisma.notification.updateMany({ where: { recipientUserId: me.id, href, kind: { in: ['mention', 'order_handoff'] }, read: false }, data: { read: true } }),
-    customerRecords(o.customer),
+    isSales(me, depts) ? customerRecords(o.customer) : null, // 고객사 기록은 영업 전용
     prisma.order.findMany({ where: { id: { not: o.id } }, select: { id: true, customer: true, product: true, orderNo: true, status: true }, orderBy: { createdAt: 'desc' } }),
   ])
   const otherOrders = allOrders.filter((x) => sameCustomer(x.customer, o.customer))
@@ -168,7 +168,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         <div className="no-print mt-4"><StageTable stages={o.stages} editable={editable} canShift={sales && !isLocked} teams={teamNames} /></div>
       </Card>
 
-      <CustomerRecords customer={o.customer} notes={customerRec?.notes ?? []} others={otherOrders} action={addCustomerNoteFromOrder.bind(null, o.id)} />
+      <CustomerRecords customer={o.customer} notes={customerRec?.notes ?? []} others={otherOrders} action={addCustomerNoteFromOrder.bind(null, o.id)} showNotes={sales} />
 
       <Card>
         <h2 className="mb-3 text-sm font-bold text-navy">소통 · 변경 이력</h2>

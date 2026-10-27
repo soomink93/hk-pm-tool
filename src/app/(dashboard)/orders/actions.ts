@@ -298,9 +298,10 @@ export async function addComment(orderId: string, f: FormData) {
   done(orderId)
 }
 
-// 고객사 공용 기록 — 수주를 볼 수 있는 누구나. 같은 고객사의 다른 수주 화면에도 보임
+// 고객사 공용 기록 — 영업 부문만 (다른 부서 화면엔 '다른 수주'만). 같은 고객사의 다른 수주 화면에도 보임
 export async function addCustomerNoteFromOrder(orderId: string, f: FormData) {
-  const u = await requireMe()
+  const [u, depts] = await Promise.all([requireMe(), teamDepts()])
+  if (!isSales(u, depts)) fail('고객사 기록은 영업 부문만 남길 수 있습니다.')
   const text = str(f, 'text').slice(0, 2000)
   if (!text) return
   const o = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, select: { customer: true } })
