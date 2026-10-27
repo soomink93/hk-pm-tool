@@ -8,6 +8,7 @@ import { isFullEditor } from '@/lib/rbac'
 import { ORDERS_RELEASED } from '@/lib/constants'
 import { notifyUsers, teamStakeholders } from '@/lib/notify'
 import { parseMentionNames } from '@/lib/mentions'
+import { addCustomerNote } from '@/lib/customers/records'
 import { requireMe, teamDepts } from '@/lib/orders/session'
 import { SALES_DEPT, canEditLocked, canEditStage, canSetType, isSales } from '@/lib/orders/perm'
 import { MAX_FILE, extractFields, extractFieldsFromImage, isPdf, isSupportedImage, pdfToRedactedText, type ExtractedFields } from '@/lib/orders/extract'
@@ -295,6 +296,16 @@ export async function addComment(orderId: string, f: FormData) {
     await notifyUsers(await visibleTo(users.map((x) => x.id)), { kind: 'mention', content: `${order?.customer ?? '수주'} · ${order?.product ?? ''}: ${text.slice(0, 80)}`, href: href(orderId) }, u.id)
   }
   done(orderId)
+}
+
+// 고객사 공용 기록 — 수주를 볼 수 있는 누구나. 같은 고객사의 다른 수주 화면에도 보임
+export async function addCustomerNoteFromOrder(orderId: string, f: FormData) {
+  const u = await requireMe()
+  const text = str(f, 'text').slice(0, 2000)
+  if (!text) return
+  const o = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, select: { customer: true } })
+  await addCustomerNote(o.customer, { text, actor: u.name, orderId })
+  revalidatePath('/orders/[id]', 'page') // 같은 고객사의 다른 수주 화면도 갱신
 }
 
 export async function uploadFile(orderId: string, f: FormData) {

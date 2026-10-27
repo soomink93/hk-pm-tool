@@ -330,6 +330,36 @@ model OrderLog {
   @@index([orderId, createdAt])
 }
 
+// 고객사 — 수주의 customer(자유 입력 이름)와 key(정규화 이름)로 연결. Order는 건드리지 않음(가산적).
+// CRM 연동 대비: crmSource+crmId로 외부 회사(Account)와 1:1 매핑, 미연동이면 null
+model Customer {
+  id          String         @id @default(cuid())
+  key         String         @unique // customerKey(name) — lib/customers/key.ts
+  name        String // 처음 기록될 때의 표시 이름
+  crmSource   String? // 예: hubspot, salesforce
+  crmId       String?
+  crmSyncedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  notes       CustomerNote[]
+
+  @@unique([crmSource, crmId])
+}
+
+// 고객사 공용 기록 — 같은 고객사의 모든 수주에서 보임
+model CustomerNote {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  text       String
+  actor      String
+  orderId    String? // 어느 수주 화면에서 남겼는지 (수주 삭제돼도 기록 유지 → FK 없음)
+  crmId      String? // CRM으로 보낸 노트 ID (동기화 추적)
+  createdAt  DateTime @default(now())
+
+  @@index([customerId, createdAt])
+}
+
 // ponytail: 첨부를 DB bytea에 저장 — 파일당 4MB(Vercel 요청 한도) 이하 전제. 커지면 Supabase Storage로.
 model OrderFile {
   id         String   @id @default(cuid())

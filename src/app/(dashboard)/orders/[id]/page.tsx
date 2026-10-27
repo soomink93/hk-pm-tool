@@ -14,7 +14,10 @@ import { CompressedFileInput } from '@/components/orders/CompressedFileInput'
 import { getOrderOpts } from '@/lib/orders/optionsServer'
 import { ConfirmButton } from '@/components/orders/ConfirmButton'
 import { TypeBadge, DelayBadge } from '@/components/orders/badges'
-import { ackChanges, addComment, deleteFile, deleteOrder, setOrderStatus, setProductType, updateOrder, uploadFile } from '../actions'
+import { CustomerRecords } from '@/components/orders/CustomerRecords'
+import { customerRecords } from '@/lib/customers/records'
+import { sameCustomer } from '@/lib/customers/key'
+import { ackChanges, addComment, addCustomerNoteFromOrder, deleteFile, deleteOrder, setOrderStatus, setProductType, updateOrder, uploadFile } from '../actions'
 import { CommentBox, MentionText } from '@/components/orders/CommentBox'
 import { FLOWS, FLOW_LABEL, delayDays } from '@/lib/orders/stages'
 import type { OrderStatus, ProductType } from '@prisma/client'
@@ -39,11 +42,14 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
 
   // 멘션 자동완성 목록 + 이 수주의 멘션·인계 알림은 열면 읽음, '업데이트 필요'는 확인 완료/내 단계 수정 전까지 유지
   const href = `/orders/${o.id}`
-  const [users, pendingChanges] = await Promise.all([
+  const [users, pendingChanges, , customerRec, allOrders] = await Promise.all([
     prisma.user.findMany({ select: { name: true, team: true }, orderBy: { name: 'asc' } }),
     prisma.notification.findMany({ where: { recipientUserId: me.id, href, kind: 'order_change', read: false }, orderBy: { createdAt: 'desc' } }),
     prisma.notification.updateMany({ where: { recipientUserId: me.id, href, kind: { in: ['mention', 'order_handoff'] }, read: false }, data: { read: true } }),
+    customerRecords(o.customer),
+    prisma.order.findMany({ where: { id: { not: o.id } }, select: { id: true, customer: true, product: true, orderNo: true, status: true }, orderBy: { createdAt: 'desc' } }),
   ])
+  const otherOrders = allOrders.filter((x) => sameCustomer(x.customer, o.customer))
   const teamNames = Object.keys(depts).sort((a, b) => a.localeCompare(b, 'ko'))
   // 배너에 표시할 '내 단계' = 내 팀 단계, 임원은 담당 부문 팀들의 단계
   const mine = (team: string) => team === me.team || (me.role === 'executive' && !!me.department && depts[team] === me.department)
@@ -161,6 +167,8 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         />
         <div className="no-print mt-4"><StageTable stages={o.stages} editable={editable} canShift={sales && !isLocked} teams={teamNames} /></div>
       </Card>
+
+      <CustomerRecords customer={o.customer} notes={customerRec?.notes ?? []} others={otherOrders} action={addCustomerNoteFromOrder.bind(null, o.id)} />
 
       <Card>
         <h2 className="mb-3 text-sm font-bold text-navy">소통 · 변경 이력</h2>
