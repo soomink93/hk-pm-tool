@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Building2 } from 'lucide-react'
 import type { Role } from '@/lib/rbac'
 import { LogoutButton } from './LogoutButton'
@@ -23,10 +24,10 @@ const ROLE_CHIP: Record<Role, string> = {
 export function Header({ name, role }: { name: string; role: Role }) {
   return (
     <header className="flex items-center gap-3 bg-navy px-4 py-3 text-white sm:gap-4 sm:px-6 sm:py-3.5">
-      <div className="flex shrink-0 items-center gap-2">
+      <Link href="/overview" className="flex shrink-0 items-center gap-2 hover:opacity-80" title="전체 현황으로">
         <Building2 size={18} />
         <h1 className="whitespace-nowrap text-sm font-bold sm:text-base">HK 운영 대시보드</h1>
-      </div>
+      </Link>
       <div className="hidden flex-1 justify-center md:flex">
         <GlobalSearch />
       </div>
