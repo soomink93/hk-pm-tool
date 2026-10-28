@@ -9,6 +9,7 @@ import { ORDERS_RELEASED } from '@/lib/constants'
 import { notifyUsers, teamStakeholders } from '@/lib/notify'
 import { parseMentionNames } from '@/lib/mentions'
 import { addCustomerNote } from '@/lib/customers/records'
+import { matchMaterialId } from '@/lib/erp/match'
 import { requireMe, teamDepts } from '@/lib/orders/session'
 import { SALES_DEPT, canEditLocked, canEditStage, canSetType, isSales } from '@/lib/orders/perm'
 import { MAX_FILE, extractFields, extractFieldsFromImage, isPdf, isSupportedImage, pdfToRedactedText, type ExtractedFields } from '@/lib/orders/extract'
@@ -95,10 +96,14 @@ export async function createOrder(_prev: { error: string }, f: FormData): Promis
     const salesTeam = u.team && depts[u.team] === SALES_DEPT ? u.team : undefined
     const file = await readFile(f)
     const planned = planStages(type, start, o.dueDate || undefined, salesTeam)
+    // 입력 모델이 품목 마스터와 일치하면 FK 자동 연결(없으면 null)
+    const mats = await prisma.material.findMany({ where: { active: true }, select: { id: true, name: true, code: true, modelBase: true, size: true } })
+    const materialId = matchMaterialId(o.product, mats)
     const order = await prisma.order.create({
       data: {
         ...o,
         productType: type,
+        materialId,
         createdBy: u.name,
         stages: { create: planned.map((s) => ({ ...s, baseStart: s.start, baseEnd: s.end })) },
         logs: { create: { kind: 'change', actor: u.name, text: `수주 등록 · ${FLOW_LABEL[type]}${file ? ` (첨부: ${file.name})` : ''}` } },
