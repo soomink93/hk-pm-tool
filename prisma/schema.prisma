@@ -295,7 +295,12 @@ model Order {
   logs   OrderLog[]
   files  OrderFile[]
 
+  // ERP 품목 연동 — 선택(nullable). 저장 시 모델이 품목 마스터와 일치하면 자동 연결(match.ts)
+  materialId String?
+  material   Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+
   @@index([status])
+  @@index([materialId])
 }
 
 model Stage {
@@ -330,20 +335,58 @@ model OrderLog {
   @@index([orderId, createdAt])
 }
 
-// 고객사 — 수주의 customer(자유 입력 이름)와 key(정규화 이름)로 연결. Order는 건드리지 않음(가산적).
-// CRM 연동 대비: crmSource+crmId로 외부 회사(Account)와 1:1 매핑, 미연동이면 null
+enum PartnerRole {
+  customer // 고객
+  supplier // 공급사
+  both     // 고객 겸 공급사
+}
+
+// 고객사/거래처 마스터 — 수주의 customer(자유 입력 이름)와 key(정규화 이름)로 연결.
+// CRM 연동 대비: crmSource+crmId로 외부 회사(Account)와 1:1 매핑, 미연동이면 null.
+// ERP 기준정보: role·code·사업자번호 등은 영업이 등록·보완(미입력이면 빈값/null, 자동 생성 고객과 공존).
 model Customer {
   id          String         @id @default(cuid())
   key         String         @unique // customerKey(name) — lib/customers/key.ts
   name        String // 처음 기록될 때의 표시 이름
+  // ── ERP 거래처 필드 (선택 입력) ──
+  code         String?       @unique // 거래처코드(채번) — 미지정 가능
+  role         PartnerRole   @default(customer) // 구분(고객/공급사/둘다)
+  bizRegNo     String        @default("") // 사업자등록번호 (해외=빈값, 부분 유니크)
+  ceo          String        @default("") // 대표자
+  bizType      String        @default("") // 업태
+  bizItem      String        @default("") // 종목
+  country      String        @default("KR")
+  currency     String        @default("KRW")
+  address      String        @default("")
+  paymentTerms String        @default("") // 결제조건
+  active       Boolean       @default(true) // 사용여부(소프트삭제)
+  memo         String        @default("") // 거래처 메모(공용 기록 CustomerNote와 별개)
+  // ── CRM ──
   crmSource   String? // 예: hubspot, salesforce
   crmId       String?
   crmSyncedAt DateTime?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   notes       CustomerNote[]
+  contacts    CustomerContact[]
 
   @@unique([crmSource, crmId])
+  @@index([role, active])
+}
+
+// 거래처 담당자(복수) — 영업·구매 연락처
+model CustomerContact {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name       String // 담당자명
+  title      String   @default("") // 직책
+  phone      String   @default("")
+  email      String   @default("")
+  isPrimary  Boolean  @default(false) // 주 담당자
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
 }
 
 // 고객사 공용 기록 — 같은 고객사의 모든 수주에서 보임
@@ -371,4 +414,52 @@ model OrderFile {
   data       Bytes
   uploadedBy String
   createdAt  DateTime @default(now())
+}
+
+// ───────── ERP 품목/모델 · BOM ─────────
+enum MaterialType {
+  FG    // 완제품 (레이저 절단기 모델)
+  SEMI  // 반제품
+  RAW   // 원자재
+  PART  // 부품
+  MERCH // 상품(사입)
+}
+
+model Material {
+  id          String       @id @default(cuid())
+  code        String       @unique // 품목코드(채번)
+  name        String // 품목명
+  type        MaterialType @default(PART) // 품목구분
+  uom         String       @default("EA") // 단위
+  manageStock Boolean      @default(true) // 재고관리여부
+  manageLot   Boolean      @default(false) // LOT관리여부
+  modelBase   String       @default("") // 완제품: FC/HD/FS/RS/K315
+  size        String       @default("") // 완제품: 3015/4020…
+  active      Boolean      @default(true)
+  memo        String       @default("")
+  bomParents  Bom[]        @relation("BomParent")
+  bomChildren Bom[]        @relation("BomChild")
+  orders      Order[]
+  createdBy   String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([type, active])
+}
+
+model Bom {
+  id        String   @id @default(cuid())
+  parentId  String // 상위품목 (FG/SEMI)
+  parent    Material @relation("BomParent", fields: [parentId], references: [id], onDelete: Cascade)
+  childId   String // 하위품목
+  child     Material @relation("BomChild", fields: [childId], references: [id], onDelete: Restrict)
+  qty       Float    @default(1) // 소요량
+  uom       String   @default("EA")
+  seq       Int      @default(0)
+  notes     String   @default("")
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@unique([parentId, childId])
+  @@index([parentId])
 }
